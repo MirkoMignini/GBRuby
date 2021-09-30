@@ -1,0 +1,20 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    bit-twiddle (0.1.1)
+    byebug (11.1.3)
+    ruby-sdl2 (0.3.5)
+
+PLATFORMS
+  x86_64-darwin-19
+
+DEPENDENCIES
+  bit-twiddle
+  byebug
+  ruby-sdl2
+
+RUBY VERSION
+   ruby 3.0.1p64
+
+BUNDLED WITH
+   2.2.15

@@ -1,0 +1,6 @@
+*.gb
+*.bin
+*.asm
+/roms
+/asm
+.byebug_history

@@ -120,7 +120,7 @@ module Instructions
   def inc_de; self.de = de + 1 & 0xFFFF; end
   def inc_hl; self.hl = hl + 1 & 0xFFFF; end
   def inc_sp; @sp = @sp + 1 & 0xFFFF; end
-  def inc_a_hl; raise NotImplementedError.new('inc_a_hl instruction not implemented yet'); end
+  def inc_a_hl; write_byte(hl, read_byte(hl) + 1 & 0xFFFF); end
 
   def nop; end
 

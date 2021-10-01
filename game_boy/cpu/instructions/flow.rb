@@ -57,7 +57,7 @@ module Flow
   def ret_nc; ret if flag_nc?; end
   def ret_nz; ret if flag_nz?; end
   def ret_z;  ret if flag_z?; end
-  def reti; raise NotImplementedError.new('reti instruction not implemented yet'); end
+  def reti; @pc = pop; @jump = true; ei; end
 
   # TODO: There is a bug in DMG causing the opcode after halt repeated twice, not reproduced currently
   def halt

@@ -147,4 +147,77 @@ module Bits
   def set_7_e; @e |= 128; end
   def set_7_h; @h |= 128; end
   def set_7_l; @l |= 128; end
+
+  def res_0_a; @a &= 0b11111110; end
+  def res_0_b; @b &= 0b11111110; end
+  def res_0_c; @c &= 0b11111110; end
+  def res_0_d; @d &= 0b11111110; end
+  def res_0_e; @e &= 0b11111110; end
+  def res_0_h; @h &= 0b11111110; end
+  def res_0_l; @l &= 0b11111110; end
+
+  def res_1_a; @a &= 0b11111101; end
+  def res_1_b; @b &= 0b11111101; end
+  def res_1_c; @c &= 0b11111101; end
+  def res_1_d; @d &= 0b11111101; end
+  def res_1_e; @e &= 0b11111101; end
+  def res_1_h; @h &= 0b11111101; end
+  def res_1_l; @l &= 0b11111101; end
+
+  def res_2_a; @a &= 0b11111011; end
+  def res_2_b; @b &= 0b11111011; end
+  def res_2_c; @c &= 0b11111011; end
+  def res_2_d; @d &= 0b11111011; end
+  def res_2_e; @e &= 0b11111011; end
+  def res_2_h; @h &= 0b11111011; end
+  def res_2_l; @l &= 0b11111011; end
+
+  def res_3_a; @a &= 0b11110111; end
+  def res_3_b; @b &= 0b11110111; end
+  def res_3_c; @c &= 0b11110111; end
+  def res_3_d; @d &= 0b11110111; end
+  def res_3_e; @e &= 0b11110111; end
+  def res_3_h; @h &= 0b11110111; end
+  def res_3_l; @l &= 0b11110111; end
+
+  def res_4_a; @a &= 0b11101111; end
+  def res_4_b; @b &= 0b11101111; end
+  def res_4_c; @c &= 0b11101111; end
+  def res_4_d; @d &= 0b11101111; end
+  def res_4_e; @e &= 0b11101111; end
+  def res_4_h; @h &= 0b11101111; end
+  def res_4_l; @l &= 0b11101111; end
+
+  def res_5_a; @a &= 0b11011111; end
+  def res_5_b; @b &= 0b11011111; end
+  def res_5_c; @c &= 0b11011111; end
+  def res_5_d; @d &= 0b11011111; end
+  def res_5_e; @e &= 0b11011111; end
+  def res_5_h; @h &= 0b11011111; end
+  def res_5_l; @l &= 0b11011111; end
+
+  def res_6_a; @a &= 0b10111111; end
+  def res_6_b; @b &= 0b10111111; end
+  def res_6_c; @c &= 0b10111111; end
+  def res_6_d; @d &= 0b10111111; end
+  def res_6_e; @e &= 0b10111111; end
+  def res_6_h; @h &= 0b10111111; end
+  def res_6_l; @l &= 0b10111111; end
+
+  def res_7_a; @a &= 0b01111111; end
+  def res_7_b; @b &= 0b01111111; end
+  def res_7_c; @c &= 0b01111111; end
+  def res_7_d; @d &= 0b01111111; end
+  def res_7_e; @e &= 0b01111111; end
+  def res_7_h; @h &= 0b01111111; end
+  def res_7_l; @l &= 0b01111111; end
+
+  def res_0_a_hl; write_byte(hl, read_byte(hl) & 0b11111110); end
+  def res_1_a_hl; write_byte(hl, read_byte(hl) & 0b11111101); end
+  def res_2_a_hl; write_byte(hl, read_byte(hl) & 0b11111011); end
+  def res_3_a_hl; write_byte(hl, read_byte(hl) & 0b11110111); end
+  def res_4_a_hl; write_byte(hl, read_byte(hl) & 0b11101111); end
+  def res_5_a_hl; write_byte(hl, read_byte(hl) & 0b11011111); end
+  def res_6_a_hl; write_byte(hl, read_byte(hl) & 0b10111111); end
+  def res_7_a_hl; write_byte(hl, read_byte(hl) & 0b01111111); end
 end

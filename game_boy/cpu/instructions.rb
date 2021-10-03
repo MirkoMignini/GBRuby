@@ -103,7 +103,7 @@ module Instructions
   def dec_de; self.de = de - 1 & 0xFFFF; end
   def dec_hl; self.hl = hl - 1 & 0xFFFF; end
   def dec_sp; @sp = @sp - 1 & 0xFFFF; end
-  def dec_a_hl; write_byte(hl, read_byte(hl) - 1 & 0xFFFF); end
+  def dec_a_hl; write_byte(hl, read_byte(hl) - 1 & 0xFF); end
 
   def di; disable_inturrupts; end
   def ei; enable_inturrupts; end
@@ -120,76 +120,11 @@ module Instructions
   def inc_de; self.de = de + 1 & 0xFFFF; end
   def inc_hl; self.hl = hl + 1 & 0xFFFF; end
   def inc_sp; @sp = @sp + 1 & 0xFFFF; end
-  def inc_a_hl; write_byte(hl, read_byte(hl) + 1 & 0xFFFF); end
+  def inc_a_hl; write_byte(hl, read_byte(hl) + 1 & 0xFF); end
 
   def nop; end
 
   def prefix; fetch_cb; execute; end
-
-  def res_0_a_hl; raise NotImplementedError.new('res_0_a_hl instruction not implemented yet'); end
-  def res_0_a; raise NotImplementedError.new('res_0_a instruction not implemented yet'); end
-  def res_0_b; raise NotImplementedError.new('res_0_b instruction not implemented yet'); end
-  def res_0_c; raise NotImplementedError.new('res_0_c instruction not implemented yet'); end
-  def res_0_d; raise NotImplementedError.new('res_0_d instruction not implemented yet'); end
-  def res_0_e; raise NotImplementedError.new('res_0_e instruction not implemented yet'); end
-  def res_0_h; raise NotImplementedError.new('res_0_h instruction not implemented yet'); end
-  def res_0_l; raise NotImplementedError.new('res_0_l instruction not implemented yet'); end
-  def res_1_a_hl; raise NotImplementedError.new('res_1_a_hl instruction not implemented yet'); end
-  def res_1_a; raise NotImplementedError.new('res_1_a instruction not implemented yet'); end
-  def res_1_b; raise NotImplementedError.new('res_1_b instruction not implemented yet'); end
-  def res_1_c; raise NotImplementedError.new('res_1_c instruction not implemented yet'); end
-  def res_1_d; raise NotImplementedError.new('res_1_d instruction not implemented yet'); end
-  def res_1_e; raise NotImplementedError.new('res_1_e instruction not implemented yet'); end
-  def res_1_h; raise NotImplementedError.new('res_1_h instruction not implemented yet'); end
-  def res_1_l; raise NotImplementedError.new('res_1_l instruction not implemented yet'); end
-  def res_2_a_hl; raise NotImplementedError.new('res_2_a_hl instruction not implemented yet'); end
-  def res_2_a; raise NotImplementedError.new('res_2_a instruction not implemented yet'); end
-  def res_2_b; raise NotImplementedError.new('res_2_b instruction not implemented yet'); end
-  def res_2_c; raise NotImplementedError.new('res_2_c instruction not implemented yet'); end
-  def res_2_d; raise NotImplementedError.new('res_2_d instruction not implemented yet'); end
-  def res_2_e; raise NotImplementedError.new('res_2_e instruction not implemented yet'); end
-  def res_2_h; raise NotImplementedError.new('res_2_h instruction not implemented yet'); end
-  def res_2_l; raise NotImplementedError.new('res_2_l instruction not implemented yet'); end
-  def res_3_a_hl; raise NotImplementedError.new('res_3_a_hl instruction not implemented yet'); end
-  def res_3_a; raise NotImplementedError.new('res_3_a instruction not implemented yet'); end
-  def res_3_b; raise NotImplementedError.new('res_3_b instruction not implemented yet'); end
-  def res_3_c; raise NotImplementedError.new('res_3_c instruction not implemented yet'); end
-  def res_3_d; raise NotImplementedError.new('res_3_d instruction not implemented yet'); end
-  def res_3_e; raise NotImplementedError.new('res_3_e instruction not implemented yet'); end
-  def res_3_h; raise NotImplementedError.new('res_3_h instruction not implemented yet'); end
-  def res_3_l; raise NotImplementedError.new('res_3_l instruction not implemented yet'); end
-  def res_4_a_hl; raise NotImplementedError.new('res_4_a_hl instruction not implemented yet'); end
-  def res_4_a; raise NotImplementedError.new('res_4_a instruction not implemented yet'); end
-  def res_4_b; raise NotImplementedError.new('res_4_b instruction not implemented yet'); end
-  def res_4_c; raise NotImplementedError.new('res_4_c instruction not implemented yet'); end
-  def res_4_d; raise NotImplementedError.new('res_4_d instruction not implemented yet'); end
-  def res_4_e; raise NotImplementedError.new('res_4_e instruction not implemented yet'); end
-  def res_4_h; raise NotImplementedError.new('res_4_h instruction not implemented yet'); end
-  def res_4_l; raise NotImplementedError.new('res_4_l instruction not implemented yet'); end
-  def res_5_a_hl; raise NotImplementedError.new('res_5_a_hl instruction not implemented yet'); end
-  def res_5_a; raise NotImplementedError.new('res_5_a instruction not implemented yet'); end
-  def res_5_b; raise NotImplementedError.new('res_5_b instruction not implemented yet'); end
-  def res_5_c; raise NotImplementedError.new('res_5_c instruction not implemented yet'); end
-  def res_5_d; raise NotImplementedError.new('res_5_d instruction not implemented yet'); end
-  def res_5_e; raise NotImplementedError.new('res_5_e instruction not implemented yet'); end
-  def res_5_h; raise NotImplementedError.new('res_5_h instruction not implemented yet'); end
-  def res_5_l; raise NotImplementedError.new('res_5_l instruction not implemented yet'); end
-  def res_6_a_hl; raise NotImplementedError.new('res_6_a_hl instruction not implemented yet'); end
-  def res_6_a; raise NotImplementedError.new('res_6_a instruction not implemented yet'); end
-  def res_6_b; raise NotImplementedError.new('res_6_b instruction not implemented yet'); end
-  def res_6_c; raise NotImplementedError.new('res_6_c instruction not implemented yet'); end
-  def res_6_d; raise NotImplementedError.new('res_6_d instruction not implemented yet'); end
-  def res_6_e; raise NotImplementedError.new('res_6_e instruction not implemented yet'); end
-  def res_6_h; raise NotImplementedError.new('res_6_h instruction not implemented yet'); end
-  def res_6_l; raise NotImplementedError.new('res_6_l instruction not implemented yet'); end
-  def res_7_a_hl; raise NotImplementedError.new('res_7_a_hl instruction not implemented yet'); end
-  def res_7_a; raise NotImplementedError.new('res_7_a instruction not implemented yet'); end
-  def res_7_b; raise NotImplementedError.new('res_7_b instruction not implemented yet'); end
-  def res_7_c; raise NotImplementedError.new('res_7_c instruction not implemented yet'); end
-  def res_7_d; raise NotImplementedError.new('res_7_d instruction not implemented yet'); end
-  def res_7_e; raise NotImplementedError.new('res_7_e instruction not implemented yet'); end
-  def res_7_h; raise NotImplementedError.new('res_7_h instruction not implemented yet'); end
-  def res_7_l; raise NotImplementedError.new('res_7_l instruction not implemented yet'); end
 
   def rl_a_hl; raise NotImplementedError.new('rl_a_hl instruction not implemented yet'); end
   def rl_a; raise NotImplementedError.new('rl_a instruction not implemented yet'); end

@@ -28,13 +28,15 @@ class GameBoy
   def play(boot: true)
     skip_boot unless boot
 
-    cycles = 0
-
     loop do
-      cycles += @cpu.step
-      cycles -= CYCLES_PER_FRAME if cycles >= CYCLES_PER_FRAME
+      cycles = @cpu.step
       @timer.step(cycles)
       @ppu.step(cycles)
     end
+
+  rescue StandardError => e
+    puts e.backtrace
+    puts e
+    exit
   end
 end

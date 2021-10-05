@@ -51,10 +51,10 @@ module Registers
   end
 
   def set_flags(z, n, h, c)
-    ((z || z == 1) ? @f |= Z_MASK : @f &= ~Z_MASK) if z != nil
-    ((n || n == 1) ? @f |= N_MASK : @f &= ~N_MASK) if n != nil
-    ((h || h == 1) ? @f |= H_MASK : @f &= ~H_MASK) if h != nil
-    ((c || c == 1) ? @f |= C_MASK : @f &= ~C_MASK) if c != nil
+    ((z == true || z == 1) ? @f |= Z_MASK : @f = @f & ~Z_MASK) if z != nil
+    ((n == true || n == 1) ? @f |= N_MASK : @f = @f & ~N_MASK) if n != nil
+    ((h == true || h == 1) ? @f |= H_MASK : @f = @f & ~H_MASK) if h != nil
+    ((c == true || c == 1) ? @f |= C_MASK : @f = @f & ~C_MASK) if c != nil
   end
 
   def flag_nz?; (@f & Z_MASK) == 0; end

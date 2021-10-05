@@ -38,6 +38,9 @@ module Debugger
     @cpu.register_set('HL', 0x014D)
     @cpu.register_set('SP', 0xFFFE)
 
+    # TEMP
+    write_byte(0xFF00, 0xFF)
+
     # set IO reigster state
     write_byte(0xFF10, 0x80)
     write_byte(0xFF11, 0xBF)

@@ -62,7 +62,7 @@ class CPU
   def debug_instruction(pc, instruction)
     "%04X %02X %02X %02X %10s AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X Z:%s N:%s H:%s C:%s" % [
       pc, read_byte(pc), read_byte(pc + 1), read_byte(pc + 2), instruction[:method],
-      af, bc, de, hl, @sp, flag_z_bit, flag_h_bit, flag_h_bit, flag_c_bit
+      af, bc, de, hl, @sp, flag_z_bit, flag_n_bit, flag_h_bit, flag_c_bit
     ]
   end
 

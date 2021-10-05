@@ -32,7 +32,7 @@ class Cartridge
   end
 
   def write_rom_byte(address, value)
-    @rom[address] = value
+    # @rom[address] = value
   end
 
   def write_ram_byte(address, value)

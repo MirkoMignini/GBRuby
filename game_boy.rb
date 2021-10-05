@@ -3,8 +3,7 @@ require_relative 'game_boy/bus'
 require_relative 'game_boy/cpu'
 require_relative 'game_boy/ppu'
 require_relative 'game_boy/timer'
-
-require 'benchmark'
+require 'sdl2'
 
 class GameBoy
   include BUS

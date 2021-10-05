@@ -15,6 +15,8 @@ module BUS
   IO_REGISTERS_ADDRESS  = 0xFF00.freeze
   HRAM_ADDRESS          = 0xFF80.freeze
 
+  attr_reader :io_registers, :hram
+
   def init_bus
     @vram = VRAM.new(self)
     @wram = WRAM.new(self)
@@ -51,7 +53,7 @@ module BUS
   end
 
   def write_byte(address, value)
-    raise 'BUS cannot write null value to address 0x%04X' % [address] if value.nil?
+    raise 'BUS cannot write null or not int value to address 0x%04X, %s' % [address, value] if value.nil? || !value.is_a?(Integer)
     raise 'BUS cannot write %02X to address 0x%04X' % [value, address] if value < 0 || value > 0xFF
 
     if ( address < VRAM_ADDRESS )

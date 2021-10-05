@@ -41,7 +41,7 @@ class Timer
     return if @div_counter < 0xFF
 
     @div_counter = 0
-    @device.io_registers.inc(IORegisters::DIV)
+    @device.write_byte(DIV, @device.read_byte(DIV) + 1 & 0xFF)
   end
 
   def update_tima(cycles)
@@ -54,10 +54,10 @@ class Timer
     reset_tima
 
     if (@device.read_byte(TIMA) == 0xFF)
-      @device.io_registers.set(IORegisters::TIMA, @device.io_registers.get(IORegisters::TMA))
+      @device.write_byte(TIMA, @device.read_byte(TMA))
       @device.cpu.request_interrupt(CPU::INTERRUPT_TIMER)
     else
-      @device.io_registers.inc(IORegisters::TIMA)
+      @device.write_byte(TIMA, @device.read_byte(TIMA) + 1 & 0xFF)
     end
   end
 end

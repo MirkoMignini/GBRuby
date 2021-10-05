@@ -12,37 +12,49 @@ module Instructions
   include Load
   include Logic
 
-  def adc_byte(a, b); [(a + b + flag_c_bit) & 0xFF, ((a & 0xF) + (b & 0xF) + flag_c_bit) > 0xF, (a + b + flag_c_bit) > 0xFF]; end
-  def adc_a_a; @a, h, c = adc_byte(@a, @a); set_flags(@a == 0, 0, h, c); end
-  def adc_a_b; @a, h, c = adc_byte(@a, @b); set_flags(@a == 0, 0, h, c); end
-  def adc_a_c; @a, h, c = adc_byte(@a, @c); set_flags(@a == 0, 0, h, c); end
-  def adc_a_d; @a, h, c = adc_byte(@a, @d); set_flags(@a == 0, 0, h, c); end
-  def adc_a_e; @a, h, c = adc_byte(@a, @e); set_flags(@a == 0, 0, h, c); end
-  def adc_a_h; @a, h, c = adc_byte(@a, @h); set_flags(@a == 0, 0, h, c); end
-  def adc_a_l; @a, h, c = adc_byte(@a, @l); set_flags(@a == 0, 0, h, c); end
-  def adc_a_d8; @a, h, c = adc_byte(@a, pc_read_byte); set_flags(@a == 0, 0, h, c); end
-  def adc_a_a_hl; raise NotImplementedError.new('adc_a_a_hl instruction not implemented yet'); end
+  def adc_a(value)
+    result = @a + value + flag_c_bit;
 
-  def add_byte(a, b)
-    result = a + b
-
-    [
-      result & 0xFF,
-      result & 0xFF == 0x0,
+    set_flags(
+      (result & 0xFF) == 0,
       0,
-      (a ^ b ^ result) & 0x100 == 0x100,
-      (a ^ b ^ result) & 0x10 == 0x10
-    ]
+      (@a & 0x0f) + (value & 0x0f) + flag_c_bit > 0x0f,
+      result > 0xff
+    )
+
+    @a = result & 0xFF
   end
-  def add_a_a; @a, z, n, h, c = add_byte(@a, @a); set_flags(z, n, h, c); end
-  def add_a_b; @a, z, n, h, c = add_byte(@a, @b); set_flags(z, n, h, c); end
-  def add_a_c; @a, z, n, h, c = add_byte(@a, @c); set_flags(z, n, h, c); end
-  def add_a_d; @a, z, n, h, c = add_byte(@a, @d); set_flags(z, n, h, c); end
-  def add_a_e; @a, z, n, h, c = add_byte(@a, @e); set_flags(z, n, h, c); end
-  def add_a_h; @a, z, n, h, c = add_byte(@a, @h); set_flags(z, n, h, c); end
-  def add_a_l; @a, z, n, h, c = add_byte(@a, @l); set_flags(z, n, h, c); end
-  def add_a_d8; @a, z, n, h, c = add_byte(@a, pc_read_byte); set_flags(z, n, h, c); end
-  def add_a_a_hl; @a, z, n, h, c = add_byte(@a, read_byte(hl)); set_flags(z, n, h, c); end
+  def adc_a_a()= adc_a(@a)
+  def adc_a_b()= adc_a(@b)
+  def adc_a_c()= adc_a(@c)
+  def adc_a_d()= adc_a(@d)
+  def adc_a_e()= adc_a(@e)
+  def adc_a_h()= adc_a(@h)
+  def adc_a_l()= adc_a(@l)
+  def adc_a_d8()= adc_a(pc_read_byte)
+  def adc_a_a_hl()= adc_a(read_byte(hl))
+
+  def add_a(value)
+    result = @a + value
+
+    set_flags(
+      (result & 0xFF) == 0,
+      0,
+      (@a & 0x0f) + (value & 0x0f) > 0x0f,
+      result > 0xFF
+    )
+
+    @a = result & 0xFF
+  end
+  def add_a_a()= add_a(@a)
+  def add_a_b()= add_a(@b)
+  def add_a_c()= add_a(@c)
+  def add_a_d()= add_a(@d)
+  def add_a_e()= add_a(@e)
+  def add_a_h()= add_a(@h)
+  def add_a_l()= add_a(@l)
+  def add_a_d8()= add_a(pc_read_byte)
+  def add_a_a_hl()= add_a(read_byte(hl))
 
   def add_word(a, b); [a + b & 0xFFFF, (a & 0xFFF) + (b & 0xFFF) > 0xFFF, a + b > 0xFFFF]; end
   def add_hl_bc; self.hl, h, c = add_word(hl, bc); set_flags(nil, 0, h, c); end
@@ -50,43 +62,27 @@ module Instructions
   def add_hl_hl; self.hl, h, c = add_word(hl, hl); set_flags(nil, 0, h, c); end
   def add_hl_sp; self.hl, h, c = add_word(hl, @sp); set_flags(nil, 0, h, c); end
 
-  def add_sp_r8; @sp, h, c = add_word(@sp, pc_read_signed_byte); set_flags(0, 0, h, c); end
+  def add_sp_r8; @sp, h, c = add_word(@sp, pc_read_signed_byte); set_flags(nil, 0, h, c); end
 
   def ccf; set_flags(nil, 0, 0, !flag_c?); end
 
-  def cp(a, b); [a - b && 0xFF, 1, (a & 0xF) - (b & 0xF) < 0, a - b < 0]; end
-  # def cp(a, b)
-  #   result = a - b
-
-  #   [
-  #     a == b,
-  #     1,
-  #     (result & 0xF) > (a & 0xF),
-  #     a < b
-  #   ]
-  #   # [
-  #   #   a == b,
-	# 	#   1,
-	# 	#   (a & 0xF) - (b & 0xF) < 0,
-	# 	#   a - b < 0
-  #   # ]
-  # end
-
-  # result = @a - @b
-  # result & 0xFF == 0x0 ? set_z_flag : reset_z_flag
-  # @a < @b ? set_c_flag : reset_c_flag
-  # (result & 0xF) > (@a & 0xF) ? set_h_flag : reset_h_flag
-  # set_n_flag
-
-  def cp_a; set_flags(*cp(@a, @a)); end
-  def cp_b; set_flags(*cp(@a, @b)); end
-  def cp_c; set_flags(*cp(@a, @c)); end
-  def cp_d; set_flags(*cp(@a, @d)); end
-  def cp_e; set_flags(*cp(@a, @e)); end
-  def cp_h; set_flags(*cp(@a, @h)); end
-  def cp_l; set_flags(*cp(@a, @l)); end
-  def cp_d8; set_flags(*cp(@a, pc_read_byte)); end
-  def cp_a_hl; set_flags(*cp(@a, read_byte(hl))); end
+  def cp(value)
+    set_flags(
+      @a == value,
+      1,
+      (@a & 0x0f) < (value & 0x0f),
+      @a - value < 0
+    )
+  end
+  def cp_a()= cp(@a)
+  def cp_b()= cp(@b)
+  def cp_c()= cp(@c)
+  def cp_d()= cp(@d)
+  def cp_e()= cp(@e)
+  def cp_h()= cp(@h)
+  def cp_l()= cp(@l)
+  def cp_d8()= cp(pc_read_byte)
+  def cp_a_hl()= cp(read_byte(hl))
 
   def cpl; @a ^= 0xFF; set_flags(nil, 1, 1, nil); end
 
@@ -125,7 +121,7 @@ module Instructions
     [
       result & 0xFF,
       result & 0xFF == 0x0,
-      result & 0xF == 0xF
+      result & 0xF == 0
     ]
   end
   def dec_a; @a, z, hc = byte_dec(@a); set_flags(z, 1, hc, nil); end
@@ -152,24 +148,24 @@ module Instructions
     result = value + 1
     [
       result & 0xFF,
-      result & 0xFF == 0x0,
-      result & 0xF == 0x0
+      result & 0xFF == 0,
+      result & 0xF == 0
     ]
   end
-  def inc_a; @a, z, hc = byte_inc(@a); set_flags(z, 1, hc, nil); end
-  def inc_b; @b, z, hc = byte_inc(@b); set_flags(z, 1, hc, nil); end
-  def inc_c; @c, z, hc = byte_inc(@c); set_flags(z, 1, hc, nil); end
-  def inc_d; @d, z, hc = byte_inc(@d); set_flags(z, 1, hc, nil); end
-  def inc_e; @e, z, hc = byte_inc(@e); set_flags(z, 1, hc, nil); end
-  def inc_h; @h, z, hc = byte_inc(@h); set_flags(z, 1, hc, nil); end
-  def inc_l; @l, z, hc = byte_inc(@l); set_flags(z, 1, hc, nil); end
+  def inc_a; @a, z, hc = byte_inc(@a); set_flags(z, 0, hc, nil); end
+  def inc_b; @b, z, hc = byte_inc(@b); set_flags(z, 0, hc, nil); end
+  def inc_c; @c, z, hc = byte_inc(@c); set_flags(z, 0, hc, nil); end
+  def inc_d; @d, z, hc = byte_inc(@d); set_flags(z, 0, hc, nil); end
+  def inc_e; @e, z, hc = byte_inc(@e); set_flags(z, 0, hc, nil); end
+  def inc_h; @h, z, hc = byte_inc(@h); set_flags(z, 0, hc, nil); end
+  def inc_l; @l, z, hc = byte_inc(@l); set_flags(z, 0, hc, nil); end
   def inc_bc; self.bc = bc + 1 & 0xFFFF; end
   def inc_de; self.de = de + 1 & 0xFFFF; end
   def inc_hl; self.hl = hl + 1 & 0xFFFF; end
   def inc_sp; @sp = @sp + 1 & 0xFFFF; end
   def inc_a_hl
     res, z, hc = byte_inc(read_byte(hl))
-    set_flags(z, 1, hc, nil)
+    set_flags(z, 0, hc, nil)
     write_byte(hl, res);
   end
 
@@ -199,7 +195,12 @@ module Instructions
 
   def rlca; set_flags(0, 0, 0, flag_z_bit); @a = @a.lrot8(1); end
 
-  def rr(value); [value.rrot8(1), value & 1]; end
+  def rr(value)
+    [
+      (value >> 1) | (flag_c_bit << 7),
+      value & 0x01 == 0x01
+    ]
+  end
   def rr_a; @a, c = rr(@a); set_flags(@a == 0, 0, 0, c); end
   def rr_b; @b, c = rr(@b); set_flags(@b == 0, 0, 0, c); end
   def rr_c; @c, c = rr(@c); set_flags(@c == 0, 0, 0, c); end
@@ -209,7 +210,8 @@ module Instructions
   def rr_l; @l, c = rr(@l); set_flags(@l == 0, 0, 0, c); end
   def rr_a_hl; raise NotImplementedError.new('rr_a_hl instruction not implemented yet'); end
 
-  def rra; c = @a & 0x01 == 0x01; @a = @a.rrot8(1) | (flag_c_bit << 7); set_flags(@a == 0, 0, 0, c); end
+  def rra()= rr_a
+
   def rrc_a_hl; raise NotImplementedError.new('rrc_a_hl instruction not implemented yet'); end
   def rrc_a; raise NotImplementedError.new('rrc_a instruction not implemented yet'); end
   def rrc_b; raise NotImplementedError.new('rrc_b instruction not implemented yet'); end
@@ -220,15 +222,27 @@ module Instructions
   def rrc_l; raise NotImplementedError.new('rrc_l instruction not implemented yet'); end
   def rrca; raise NotImplementedError.new('rrca instruction not implemented yet'); end
 
-  def sbc_a_a_hl; raise NotImplementedError.new('sbc_a_a_hl instruction not implemented yet'); end
-  def sbc_a_a; raise NotImplementedError.new('sbc_a_a instruction not implemented yet'); end
-  def sbc_a_b; raise NotImplementedError.new('sbc_a_b instruction not implemented yet'); end
-  def sbc_a_c; raise NotImplementedError.new('sbc_a_c instruction not implemented yet'); end
-  def sbc_a_d; raise NotImplementedError.new('sbc_a_d instruction not implemented yet'); end
-  def sbc_a_d8; raise NotImplementedError.new('sbc_a_d8 instruction not implemented yet'); end
-  def sbc_a_e; raise NotImplementedError.new('sbc_a_e instruction not implemented yet'); end
-  def sbc_a_h; raise NotImplementedError.new('sbc_a_h instruction not implemented yet'); end
-  def sbc_a_l; raise NotImplementedError.new('sbc_a_l instruction not implemented yet'); end
+  def sbc(value)
+    result = @a - value - flag_c_bit;
+
+    set_flags(
+      (result & 0xFF) == 0,
+      1,
+      (value & 0x0f) + flag_c_bit > (@a & 0x0f),
+      result < 0
+    )
+
+    @a = result & 0xFF
+  end
+  def sbc_a_a()= sbc(@a)
+  def sbc_a_b()= sbc(@b)
+  def sbc_a_c()= sbc(@c)
+  def sbc_a_d()= sbc(@d)
+  def sbc_a_e()= sbc(@e)
+  def sbc_a_h()= sbc(@h)
+  def sbc_a_l()= sbc(@l)
+  def sbc_a_d8()= sbc(pc_read_byte)
+  def sbc_a_a_hl()= sbc(read_byte(hl))
 
   def scf()= set_flags(nil, 0, 0, 1)
 
@@ -263,28 +277,29 @@ module Instructions
 
   def stop_0; raise NotImplementedError.new('stop_0 instruction not implemented yet'); end
 
-  def sub_byte(a, b)
-    result = a - b
+  def sub(b)
+    result = @a - b
 
-    [
-      result & 0xFF,
-      result & 0xFF == 0x0,
+    set_flags(
+      result == 0,
       1,
-      (a ^ b ^ result) & 0x100 == 0x100,
-      (a ^ b ^ result) & 0x10 == 0x10
-    ]
-  end
-  def sub_a; @a, z, n, h, c = sub_byte(@a, @a); set_flags(z, n, h, c); end
-  def sub_b; @a, z, n, h, c = sub_byte(@a, @b); set_flags(z, n, h, c); end
-  def sub_c; @a, z, n, h, c = sub_byte(@a, @c); set_flags(z, n, h, c); end
-  def sub_d; @a, z, n, h, c = sub_byte(@a, @d); set_flags(z, n, h, c); end
-  def sub_e; @a, z, n, h, c = sub_byte(@a, @e); set_flags(z, n, h, c); end
-  def sub_h; @a, z, n, h, c = sub_byte(@a, @h); set_flags(z, n, h, c); end
-  def sub_l; @a, z, n, h, c = sub_byte(@a, @l); set_flags(z, n, h, c); end
-  def sub_d8; @a, z, n, h, c = sub_byte(@a, pc_read_byte); set_flags(z, n, h, c); end
-  def sub_a_hl; @a, z, n, h, c = sub_byte(@a, read_byte(hl)); set_flags(z, n, h, c); end
+      (b & 0x0f) > (@a & 0x0f),
+      result < 0
+    )
 
-  def swap(byte) ((byte & 0x0F) << 4) + ((byte & 0xF0) >> 4); end
+    @a = result & 0xFF
+  end
+  def sub_a()= sub(@a)
+  def sub_b()= sub(@b)
+  def sub_c()= sub(@c)
+  def sub_d()= sub(@d)
+  def sub_e()= sub(@e)
+  def sub_h()= sub(@h)
+  def sub_l()= sub(@l)
+  def sub_d8()= sub(pc_read_byte)
+  def sub_a_hl()= sub(read_byte(hl))
+
+  def swap(byte) (byte << 4) | (byte >> 4); end
   def swap_a; @a = swap(@a); set_flags(@a == 0, 0, 0, 0); end
   def swap_b; @b = swap(@b); set_flags(@b == 0, 0, 0, 0); end
   def swap_c; @c = swap(@c); set_flags(@c == 0, 0, 0, 0); end

@@ -12,12 +12,11 @@ module Registers
     @a = @f = @b = @c = @d = @e = @h = @l = 0x0
   end
 
-  def af=(value); @a = (value >> 8); @f = (value & 0xFF); end
+  def af=(value); @a = (value >> 8); @f = (value & 0xF0); end
   def bc=(value); @b = (value >> 8); @c = (value & 0xFF); end
   def de=(value); @d = (value >> 8); @e = (value & 0xFF); end
   def hl=(value); @h = (value >> 8); @l = (value & 0xFF); end
 
-  # TODO: The lower four bits of F register always read zero even if written with a one.
   def af; (@a << 8) + @f; end
   def bc; (@b << 8) + @c; end
   def de; (@d << 8) + @e; end

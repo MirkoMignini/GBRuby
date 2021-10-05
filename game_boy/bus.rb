@@ -35,7 +35,7 @@ module BUS
     elsif address < ECHO_ADDRESS
       @wram.read_byte(address)
     elsif address < OAM_ADDRESS
-      @wram.read_byte(address - 0x2000, value)
+      @wram.read_byte(address - 0x2000)
     elsif address < NOT_USABLE_ADDRESS
       @oam.read_byte(address)
     elsif address < IO_REGISTERS_ADDRESS

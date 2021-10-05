@@ -27,29 +27,43 @@ module Interrupts
   end
 
   def request_interrupt(interrupt)
-    write_byte(IF_ADDRESS, read_byte(IF_ADDRESS) | interrupt)
+    device.io_registers.set(IORegisters::IF, device.io_registers.get(IORegisters::IF) | interrupt)
   end
 
   def reset_interrupt(interrupt)
-    write_byte(IF_ADDRESS, read_byte(IF_ADDRESS) & (0xFF & ~interrupt))
+    device.io_registers.set(IORegisters::IF, device.io_registers.get(IORegisters::IF) & (0xFF & ~interrupt))
   end
 
   def process_interrupts
-    requested_interrupts = read_byte(IF_ADDRESS)
+    requested_interrupts = device.io_registers.get(IORegisters::IF)
 
     return if requested_interrupts == 0x0
 
-    enabled_interrupts = read_byte(IE_ADDRESS)
+    enabled_interrupts = device.hram.read_byte(IE_ADDRESS)
 
-    [ INTERRUPT_VBLANK,
-      INTERRUPT_LCDSTAT,
-      INTERRUPT_TIMER,
-      INTERRUPT_SERIAL,
-      INTERRUPT_JOYPAD ].each do |interrupt|
-      if (requested_interrupts & interrupt == interrupt) && (enabled_interrupts & interrupt == interrupt)
-        @halted = false
-        execute_interrupt(interrupt) if @ime
-      end
+    if (requested_interrupts & INTERRUPT_VBLANK == INTERRUPT_VBLANK) && (enabled_interrupts & INTERRUPT_VBLANK == INTERRUPT_VBLANK)
+      @halted = false
+      execute_interrupt(INTERRUPT_VBLANK) if @ime
+    end
+
+    if (requested_interrupts & INTERRUPT_LCDSTAT == INTERRUPT_LCDSTAT) && (enabled_interrupts & INTERRUPT_LCDSTAT == INTERRUPT_LCDSTAT)
+      @halted = false
+      execute_interrupt(INTERRUPT_LCDSTAT) if @ime
+    end
+
+    if (requested_interrupts & INTERRUPT_TIMER == INTERRUPT_TIMER) && (enabled_interrupts & INTERRUPT_TIMER == INTERRUPT_TIMER)
+      @halted = false
+      execute_interrupt(INTERRUPT_TIMER) if @ime
+    end
+
+    if (requested_interrupts & INTERRUPT_SERIAL == INTERRUPT_SERIAL) && (enabled_interrupts & INTERRUPT_SERIAL == INTERRUPT_VBLANK)
+      @halted = false
+      execute_interrupt(INTERRUPT_VBLANK) if @ime
+    end
+
+    if (requested_interrupts & INTERRUPT_VBLANK == INTERRUPT_VBLANK) && (enabled_interrupts & INTERRUPT_VBLANK == INTERRUPT_VBLANK)
+      @halted = false
+      execute_interrupt(INTERRUPT_VBLANK) if @ime
     end
   end
 

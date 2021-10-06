@@ -5,30 +5,18 @@ module Miscellaneous
 
   def daa
     value = @a
-    c = nil
 
-    if !flag_n?
-      if flag_h? || (value & 0xF) > 0x9
-        value = value + 0x06
-        c = 1
-      end
-
-      if flag_c? || (value > 0x9F)
-        value = value + 0x60
-      end
+    if flag_n?
+      value = (value - 0x06) & 0xFF if flag_h?
+      value -= 0x60 if flag_c?
     else
-      if flag_h?
-        value = (value - 0x06) & 0xFF
-      end
-
-      if flag_c?
-        value = value - 0x60
-      end
+      value += 0x06 if flag_h? || (value & 0xF) > 0x9
+      value += 0x60 if flag_c? || (value > 0x9F)
     end
 
-    set_flags(value & 0xFF == 0 ? 1 : nil, nil, 0, c)
-
+    c = 1 if value & 0x100 == 0x100
     @a = value & 0xFF
+    set_flags(@a == 0, nil, 0, c)
   end
 
   def di; disable_inturrupts; end

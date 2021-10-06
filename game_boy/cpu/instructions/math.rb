@@ -35,7 +35,16 @@ module Math
   def add_hl_hl; self.hl, h, c = add_word(hl, hl); set_flags(nil, 0, h, c); end
   def add_hl_sp; self.hl, h, c = add_word(hl, @sp); set_flags(nil, 0, h, c); end
 
-  def add_sp_r8; @sp, h, c = add_word(@sp, pc_read_signed_byte); set_flags(nil, 0, h, c); end
+  def add_sp_r8
+    value = pc_read_signed_byte
+    result = (@sp + value) & 0xFFFF
+
+    h = (@sp ^ value ^ result) & 0x10 == 0x10
+    c = (@sp ^ value ^ result) & 0x100 == 0x100
+    set_flags(0, 0, h, c);
+
+    @sp = result
+  end
 
   def cp(value)= set_flags(@a == value, 1, (@a & 0x0f) < (value & 0x0f), @a - value < 0)
   def cp_a()= cp(@a)

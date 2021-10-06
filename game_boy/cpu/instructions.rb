@@ -14,14 +14,7 @@ module Instructions
 
   def adc_a(value)
     result = @a + value + flag_c_bit;
-
-    set_flags(
-      (result & 0xFF) == 0,
-      0,
-      (@a & 0x0f) + (value & 0x0f) + flag_c_bit > 0x0f,
-      result > 0xff
-    )
-
+    set_flags((result & 0xFF) == 0, 0, (@a & 0x0f) + (value & 0x0f) + flag_c_bit > 0x0f, result > 0xff)
     @a = result & 0xFF
   end
   def adc_a_a()= adc_a(@a)
@@ -36,14 +29,7 @@ module Instructions
 
   def add_a(value)
     result = @a + value
-
-    set_flags(
-      (result & 0xFF) == 0,
-      0,
-      (@a & 0x0f) + (value & 0x0f) > 0x0f,
-      result > 0xFF
-    )
-
+    set_flags((result & 0xFF) == 0, 0, (@a & 0x0f) + (value & 0x0f) > 0x0f, result > 0xFF)
     @a = result & 0xFF
   end
   def add_a_a()= add_a(@a)
@@ -66,14 +52,7 @@ module Instructions
 
   def ccf; set_flags(nil, 0, 0, !flag_c?); end
 
-  def cp(value)
-    set_flags(
-      @a == value,
-      1,
-      (@a & 0x0f) < (value & 0x0f),
-      @a - value < 0
-    )
-  end
+  def cp(value)= set_flags(@a == value, 1, (@a & 0x0f) < (value & 0x0f), @a - value < 0)
   def cp_a()= cp(@a)
   def cp_b()= cp(@b)
   def cp_c()= cp(@c)
@@ -85,8 +64,6 @@ module Instructions
   def cp_a_hl()= cp(read_byte(hl))
 
   def cpl; @a ^= 0xFF; set_flags(nil, 1, 1, nil); end
-
-  # def daa; raise NotImplementedError.new('daa instruction not implemented yet'); end
 
   def daa
     value = @a
@@ -120,8 +97,8 @@ module Instructions
     result = value - 1
     [
       result & 0xFF,
-      result & 0xFF == 0x0,
-      result & 0xF == 0
+      result & 0xFF == 0,
+      value & 0xF == 0
     ]
   end
   def dec_a; @a, z, hc = byte_dec(@a); set_flags(z, 1, hc, nil); end
@@ -173,27 +150,46 @@ module Instructions
 
   def prefix; fetch_cb; execute; end
 
-  def rl_a_hl; raise NotImplementedError.new('rl_a_hl instruction not implemented yet'); end
-  def rl_a; raise NotImplementedError.new('rl_a instruction not implemented yet'); end
-  def rl_b; raise NotImplementedError.new('rl_b instruction not implemented yet'); end
-  def rl_c; raise NotImplementedError.new('rl_c instruction not implemented yet'); end
-  def rl_d; raise NotImplementedError.new('rl_d instruction not implemented yet'); end
-  def rl_e; raise NotImplementedError.new('rl_e instruction not implemented yet'); end
-  def rl_h; raise NotImplementedError.new('rl_h instruction not implemented yet'); end
-  def rl_l; raise NotImplementedError.new('rl_l instruction not implemented yet'); end
+  def rl(value)
+    c = value & 0x80 == 0x80
+    result = ((value << 1) & 0xFF) + flag_c_bit
+    set_flags(result == 0, 0, 0, c)
+    result
+  end
+  def rl_a()= @a = rl(@a)
+  def rl_b()= @b = rl(@b)
+  def rl_c()= @c = rl(@c)
+  def rl_d()= @d = rl(@d)
+  def rl_e()= @e = rl(@e)
+  def rl_h()= @h = rl(@h)
+  def rl_l()= @l = rl(@l)
+  def rl_a_hl()= write_byte(hl, rl(read_byte(hl)))
 
-  def rla; raise NotImplementedError.new('rla instruction not implemented yet'); end
+  def rla
+    c = @a & 0x80 == 0x80
+    @a = ((@a << 1) & 0xFF) + flag_c_bit
+    set_flags(0, 0, 0, c)
+  end
 
-  def rlc_a_hl; raise NotImplementedError.new('rlc_a_hl instruction not implemented yet'); end
-  def rlc_a; raise NotImplementedError.new('rlc_a instruction not implemented yet'); end
-  def rlc_b; raise NotImplementedError.new('rlc_b instruction not implemented yet'); end
-  def rlc_c; raise NotImplementedError.new('rlc_c instruction not implemented yet'); end
-  def rlc_d; raise NotImplementedError.new('rlc_d instruction not implemented yet'); end
-  def rlc_e; raise NotImplementedError.new('rlc_e instruction not implemented yet'); end
-  def rlc_h; raise NotImplementedError.new('rlc_h instruction not implemented yet'); end
-  def rlc_l; raise NotImplementedError.new('rlc_l instruction not implemented yet'); end
-
-  def rlca; set_flags(0, 0, 0, flag_z_bit); @a = @a.lrot8(1); end
+  def rlca;
+    c = @a & 0x80 == 0x80
+    @a = @a.lrot8(1)
+    set_flags(0, 0, 0, c)
+  end
+  def rlc(value)
+    c = value & 0x80 == 0x80
+    result = value.lrot8(1)
+    set_flags(result == 0, 0, 0, c)
+    result
+  end
+  def rlc_a()= @a = rlc(@a)
+  def rlc_b()= @b = rlc(@b)
+  def rlc_c()= @c = rlc(@c)
+  def rlc_d()= @d = rlc(@d)
+  def rlc_e()= @e = rlc(@e)
+  def rlc_h()= @h = rlc(@h)
+  def rlc_l()= @l = rlc(@l)
+  def rlc_a_hl()= write_byte(hl, rlc(read_byte(hl)))
 
   def rr(value)
     [
@@ -208,30 +204,42 @@ module Instructions
   def rr_e; @e, c = rr(@e); set_flags(@e == 0, 0, 0, c); end
   def rr_h; @h, c = rr(@h); set_flags(@h == 0, 0, 0, c); end
   def rr_l; @l, c = rr(@l); set_flags(@l == 0, 0, 0, c); end
-  def rr_a_hl; raise NotImplementedError.new('rr_a_hl instruction not implemented yet'); end
+  def rr_a_hl;
+    result, c = rr(read_byte(hl))
+    set_flags(result == 0, 0, 0, c)
+    write_byte(hl, result)
+  end
 
-  def rra()= rr_a
+  def rra
+    c = @a & 1 == 1
+    @a = ((@a >> 1) + (flag_c_bit << 7)) & 0xFF
+    set_flags(0, 0, 0, c)
+  end
 
-  def rrc_a_hl; raise NotImplementedError.new('rrc_a_hl instruction not implemented yet'); end
-  def rrc_a; raise NotImplementedError.new('rrc_a instruction not implemented yet'); end
-  def rrc_b; raise NotImplementedError.new('rrc_b instruction not implemented yet'); end
-  def rrc_c; raise NotImplementedError.new('rrc_c instruction not implemented yet'); end
-  def rrc_d; raise NotImplementedError.new('rrc_d instruction not implemented yet'); end
-  def rrc_e; raise NotImplementedError.new('rrc_e instruction not implemented yet'); end
-  def rrc_h; raise NotImplementedError.new('rrc_h instruction not implemented yet'); end
-  def rrc_l; raise NotImplementedError.new('rrc_l instruction not implemented yet'); end
-  def rrca; raise NotImplementedError.new('rrca instruction not implemented yet'); end
+  def rrc(value)
+    c = value & 1
+    result = value.rrot8(1)
+    set_flags(result == 0, 0, 0, c)
+    result
+  end
+  def rrc_a()= @a = rrc(@a)
+  def rrc_b()= @b = rrc(@b)
+  def rrc_c()= @c = rrc(@c)
+  def rrc_d()= @d = rrc(@d)
+  def rrc_e()= @e = rrc(@e)
+  def rrc_h()= @h = rrc(@h)
+  def rrc_l()= @l = rrc(@l)
+  def rrc_a_hl()= write_byte(hl, rrc(read_byte(hl)))
+
+  def rrca;
+    c = @a & 1 == 1
+    @a = @a.rrot8(1)
+    set_flags(0, 0, 0, c)
+  end
 
   def sbc(value)
     result = @a - value - flag_c_bit;
-
-    set_flags(
-      (result & 0xFF) == 0,
-      1,
-      (value & 0x0f) + flag_c_bit > (@a & 0x0f),
-      result < 0
-    )
-
+    set_flags((result & 0xFF) == 0, 1, (value & 0x0f) + flag_c_bit > (@a & 0x0f), result < 0)
     @a = result & 0xFF
   end
   def sbc_a_a()= sbc(@a)
@@ -254,16 +262,25 @@ module Instructions
   def sla_e; @e, c = sla(@e); set_flags(@e == 0, 0, 0, c); end
   def sla_h; @h, c = sla(@h); set_flags(@h == 0, 0, 0, c); end
   def sla_l; @l, c = sla(@l); set_flags(@l == 0, 0, 0, c); end
-  def sla_a_hl; raise NotImplementedError.new('sla_a_hl instruction not implemented yet'); end
+  def sla_a_hl
+    result, c = sla(read_byte(hl))
+    set_flags(result == 0, 0, 0, c)
+    write_byte(hl, result)
+  end
 
-  def sra_a_hl; raise NotImplementedError.new('sra_a_hl instruction not implemented yet'); end
-  def sra_a; raise NotImplementedError.new('sra_a instruction not implemented yet'); end
-  def sra_b; raise NotImplementedError.new('sra_b instruction not implemented yet'); end
-  def sra_c; raise NotImplementedError.new('sra_c instruction not implemented yet'); end
-  def sra_d; raise NotImplementedError.new('sra_d instruction not implemented yet'); end
-  def sra_e; raise NotImplementedError.new('sra_e instruction not implemented yet'); end
-  def sra_h; raise NotImplementedError.new('sra_h instruction not implemented yet'); end
-  def sra_l; raise NotImplementedError.new('sra_l instruction not implemented yet'); end
+  def sra(value)
+    result = (value >> 1) | value & 0x80
+    set_flags(result == 0, 0, 0, value & 1 == 1)
+    result
+  end
+  def sra_a()= @a = sra(@a)
+  def sra_b()= @b = sra(@b)
+  def sra_c()= @c = sra(@c)
+  def sra_d()= @d = sra(@d)
+  def sra_e()= @e = sra(@e)
+  def sra_h()= @h = sra(@h)
+  def sra_l()= @l = sra(@l)
+  def sra_a_hl()= write_byte(hl, sra(read_byte(hl)))
 
   def srl(value); old = value; [value >> 1 & 0xFF, old & 1]; end
   def srl_a; @a, c = srl(@a); set_flags(@a == 0, 0, 0, c); end
@@ -273,20 +290,17 @@ module Instructions
   def srl_e; @e, c = srl(@e); set_flags(@e == 0, 0, 0, c); end
   def srl_h; @h, c = srl(@h); set_flags(@h == 0, 0, 0, c); end
   def srl_l; @l, c = srl(@l); set_flags(@l == 0, 0, 0, c); end
-  def srl_a_hl; raise NotImplementedError.new('srl_a_hl instruction not implemented yet'); end
+  def srl_a_hl
+    result, c = srl(read_byte(hl))
+    set_flags(result == 0, 0, 0, c)
+    write_byte(hl, result)
+  end
 
   def stop_0; raise NotImplementedError.new('stop_0 instruction not implemented yet'); end
 
   def sub(b)
     result = @a - b
-
-    set_flags(
-      result == 0,
-      1,
-      (b & 0x0f) > (@a & 0x0f),
-      result < 0
-    )
-
+    set_flags(result == 0, 1, (b & 0x0f) > (@a & 0x0f), result < 0)
     @a = result & 0xFF
   end
   def sub_a()= sub(@a)
@@ -299,13 +313,19 @@ module Instructions
   def sub_d8()= sub(pc_read_byte)
   def sub_a_hl()= sub(read_byte(hl))
 
-  def swap(byte) (byte << 4) | (byte >> 4); end
-  def swap_a; @a = swap(@a); set_flags(@a == 0, 0, 0, 0); end
-  def swap_b; @b = swap(@b); set_flags(@b == 0, 0, 0, 0); end
-  def swap_c; @c = swap(@c); set_flags(@c == 0, 0, 0, 0); end
-  def swap_d; @d = swap(@d); set_flags(@d == 0, 0, 0, 0); end
-  def swap_e; @e = swap(@e); set_flags(@e == 0, 0, 0, 0); end
-  def swap_h; @h = swap(@h); set_flags(@h == 0, 0, 0, 0); end
-  def swap_l; @l = swap(@l); set_flags(@l == 0, 0, 0, 0); end
-  def swap_a_hl; raise NotImplementedError.new('swap_a_hl instruction not implemented yet'); end
+  def swap(byte)
+    result = (byte << 4 & 0xFF) | (byte >> 4)
+    set_flags(result == 0, 0, 0, 0)
+    result
+  end
+  def swap_a()= @a = swap(@a)
+  def swap_b()= @b = swap(@b)
+  def swap_c()= @c = swap(@c)
+  def swap_d()= @d = swap(@d)
+  def swap_e()= @e = swap(@e)
+  def swap_h()= @h = swap(@h)
+  def swap_l()= @l = swap(@l)
+  def swap_a_hl
+    write_byte(hl, swap(read_byte(hl)))
+  end
 end

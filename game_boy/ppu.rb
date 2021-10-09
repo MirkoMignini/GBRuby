@@ -79,6 +79,7 @@ class PPU
   MODE_1_LIMIT = 456.freeze
 
   COLORS = [0xFFDAF9CC, 0xFF76C365, 0xFF1b6A55, 0x00031821].freeze
+  # COLORS = [0xFFFFFFFF, 0xFFAAAAAA, 0xFF555555, 0x00000000].freeze
 
   LAST_SCANLINE = 153.freeze
 
@@ -185,7 +186,20 @@ class PPU
     # draw_sprites if @lcdc & LCDC_SPRITE_DISPLAY_ENABLE == LCDC_SPRITE_DISPLAY_ENABLE
   end
 
+  def setup_palette(palette)
+    value = @device.io_registers.get(palette)
+    [
+      COLORS[value & 0b00000011],
+      COLORS[(value & 0b00001100) >> 2],
+      COLORS[(value & 0b00110000) >> 4],
+      COLORS[(value & 0b11000000) >> 6]
+    ]
+  end
+
   def draw_tiles
+    @palette = setup_palette(IORegisters::BGP)
+    # puts @palette.inspect
+
     @scroll_x = @device.io_registers.get(IORegisters::SCX)
     @scroll_y = @device.io_registers.get(IORegisters::SCY)
 
@@ -242,11 +256,11 @@ class PPU
 
       # get color
       shift = 1.lshift8(7 - index)
-      color = (byte_1 & shift).rshift8(6 - index) +
-              (byte_2 & shift).rshift8(7 - index)
+      color = (byte_1 & shift).rshift8(7 - index) +
+              (byte_2 & shift).rshift8(6 - index)
 
       # update framebuffer
-      @framebuffer[@screen_y * SCREEN_WIDTH + x] = COLORS[color]
+      @framebuffer[@screen_y * SCREEN_WIDTH + x] = @palette[color]
     end
   end
 
@@ -300,19 +314,6 @@ class PPU
 
   def draw_sprites
     # TODO
-  end
-
-  def rgb_color(color_code)
-    # case color_code
-    # when 0
-    #   0xFFDAF9CC# 0xFFFFFFFF
-    # when 1
-    #   0xFF76C365# 0xFFAAAAAA
-    # when 2
-    #   0xFF1b6A55# 0xFF555555
-    # when 3
-    #   0x00031821# 0x00000000
-    # end
   end
 
   def render

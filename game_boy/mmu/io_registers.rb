@@ -16,6 +16,9 @@ class IORegisters < Memory
   LY    = 0x44.freeze
   LYC   = 0x45.freeze
   DMA   = 0x46.freeze
+  BGP   = 0x47.freeze
+  OBP0  = 0x48.freeze
+  OBP1  = 0x49.freeze
   WY    = 0x4A.freeze
   WX    = 0x4B.freeze
 

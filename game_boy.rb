@@ -11,7 +11,7 @@ class GameBoy
 
   CYCLES_PER_FRAME = 70_224.freeze
 
-  attr_reader :cpu, :bus, :ppu, :cartridge, :timer, :io_registers, :hram, :vram
+  attr_reader :cpu, :bus, :ppu, :cartridge, :timer, :io_registers, :hram, :vram, :oam
 
   def initialize
     init_bus

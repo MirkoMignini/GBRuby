@@ -1,8 +1,8 @@
-# require_relative 'sdl'
-# require_relative 'screen'
+require_relative 'sdl'
+require_relative 'screen'
 
 class PPU
-  # include SDL
+  include SDL
   # screen 160 x 144
 
   # Mode 00: When the flag is 00 it is the H-Blank
@@ -70,18 +70,17 @@ class PPU
   MODE_2 = 2 # During Searching OAM-RAM
   MODE_3 = 3 # During Transfering Data to LCD Driver
 
-  # WINDOW_WIDTH = 480
-  # WINDOW_HEIGHT = 432
+  SCREEN_WIDTH = 160.freeze
+  SCREEN_HEIGHT = 144.freeze
 
-  SCREEN_WIDTH = 160
-  SCREEN_HEIGHT = 144
+  MODE_2_LIMIT = 80.freeze
+  MODE_3_LIMIT = 252.freeze
+  MODE_0_LIMIT = 456.freeze
+  MODE_1_LIMIT = 456.freeze
 
-  MODE_2_LIMIT = 80
-  MODE_3_LIMIT = 252
-  MODE_0_LIMIT = 456
-  MODE_1_LIMIT = 456
+  COLORS = [0xFFDAF9CC, 0xFF76C365, 0xFF1b6A55, 0x00031821].freeze
 
-  LAST_SCANLINE = 153
+  LAST_SCANLINE = 153.freeze
 
   LCDC_DISPLAY_ENABLE              = 128 # Bit 7 - LCD Display Enable             (0=Off, 1=On)
   LCDC_WIN_TILE_MAP_DISPLAY_SELECT = 64  # Bit 6 - Window Tile Map Display Select (0=9800-9BFF, 1=9C00-9FFF)
@@ -97,15 +96,11 @@ class PPU
   def initialize(device)
     @device = device
     @scan_line = 0
+    @window_line = 0
     @cycles = 0
 
-    # @framebuffer = Array.new SCREEN_WIDTH * SCREEN_HEIGHT, 0
-
-    @window = SDL2::Window.create("GBRuby", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SDL2::Window::Flags::RESIZABLE)
-    @renderer = @window.create_renderer(-1, SDL2::Renderer::Flags::ACCELERATED)
-    @renderer.logical_size =  [SCREEN_WIDTH, SCREEN_HEIGHT]
-    @last = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-    # @screen = Screen.new
+    @framebuffer = Array.new(SCREEN_WIDTH * SCREEN_HEIGHT, 0)
+    @screen = Screen.new
   end
 
   def step(cycles)
@@ -168,6 +163,7 @@ class PPU
       draw_scan_line if @scan_line < SCREEN_HEIGHT
 
       @device.io_registers.lcd_mode = 0
+      @window_line = 0
     end
   end
 
@@ -185,108 +181,144 @@ class PPU
 
   def draw_scan_line
     draw_tiles if @lcdc & LCDC_BG_WINDOW_DISPLAY == LCDC_BG_WINDOW_DISPLAY
-    # draw_window
+    # draw_window if @lcdc & LCDC_WIN_DISPLAY_ENABLE == LCDC_WIN_DISPLAY_ENABLE
     # draw_sprites if @lcdc & LCDC_SPRITE_DISPLAY_ENABLE == LCDC_SPRITE_DISPLAY_ENABLE
   end
 
   def draw_tiles
     @scroll_x = @device.io_registers.get(IORegisters::SCX)
     @scroll_y = @device.io_registers.get(IORegisters::SCY)
-    @map_tiles_map_address = (@lcdc & LCDC_BG_TILE_MAP_DISPLAY_SELECT == 0) ? 0x9800 : 0x9C00
+
+    @bg_tiles_map_address = (@lcdc & LCDC_BG_TILE_MAP_DISPLAY_SELECT == 0) ? 0x9800 : 0x9C00
     @map_tiles_address = (@lcdc & LCDC_BG_WINDOW_TILE_DATA_SELECT == 0) ? 0x8800 : 0x8000
 
-    tile_y = (@scan_line + @scroll_y) / 8
+    # First visible tile
+    @tile_x = @scroll_x / 8
+    @tile_y = ((@scan_line + @scroll_y) & 0xFF) / 8
 
-    32.times do |tile_x|
-      tile = @device.read_byte(@map_tiles_map_address + tile_x + tile_y * 32)
-      draw_tile(tile, tile_x)
+    # Screen coordinates
+    @screen_x = (@tile_x * 8) - @scroll_x
+    @screen_y = @scan_line
+
+    # There are max 21 visible horizontal tiles
+    21.times do |index|
+      # draw tile
+      draw_tile
+
+      # go to next tile x
+      @tile_x = @tile_x == 31 ? 0 : @tile_x + 1
+
+      # go to next tile screen position
+      @screen_x += 8
     end
   end
+
+  def draw_tile
+    # get tile at current coordinates
+    @tile = @device.vram.read_byte(@bg_tiles_map_address + @tile_x + @tile_y * 32)
+
+    # get tile base address
+    address = if @map_tiles_address == 0x8000
+      0x8000 + (@tile * 16)
+    else
+      0x8800 + (signed_byte(@tile) + 128) * 16
+    end
+
+    # get current tile row
+    offset = (((@screen_y + @scroll_y) & 0xFF) % 8) * 2
+
+    # get tile bytes
+    byte_1 = @device.vram.read_byte(address + offset)
+    byte_2 = @device.vram.read_byte(address + offset + 1)
+
+    # draw 8 pixel of this tile
+    8.times do |index|
+      # calculate final x screen coordinates
+      x = @screen_x + index
+
+      # skip if out of screen
+      next if x < 0
+      break if x >= 160
+
+      # get color
+      shift = 1.lshift8(7 - index)
+      color = (byte_1 & shift).rshift8(6 - index) +
+              (byte_2 & shift).rshift8(7 - index)
+
+      # update framebuffer
+      @framebuffer[@screen_y * SCREEN_WIDTH + x] = COLORS[color]
+    end
+  end
+
+  # def draw_window
+  #   @window_y = @device.io_registers.get(IORegisters::WY)
+
+  #   return if @window_y > @scan_line
+
+  #   @window_x = @device.io_registers.get(IORegisters::WX) - 7
+
+  #   return if @window_x < 0 || @window_x >= 160
+
+  #   @map_tiles_address = (@lcdc & LCDC_BG_WINDOW_TILE_DATA_SELECT == 0) ? 0x8800 : 0x8000
+  #   @win_tiles_map_address = (@lcdc & LCDC_WIN_TILE_MAP_DISPLAY_SELECT == 0) ? 0x9800 : 0x9C00
+
+  #   tile_y = (@scan_line - @window_y) / 8
+
+  #   20.times do |tile_x|
+  #     next if (tile_x * 8 < @window_x)
+
+  #     tile_x = (tile_x * 8 - @window_x) / 8
+
+  #     tile = @device.vram.read_byte(@win_tiles_map_address + tile_x + tile_y * 32)
+
+  #     address = if @map_tiles_address == 0x8000
+  #       0x8000 + (tile * 16)
+  #     else
+  #       0x8800 + (signed_byte(tile) + 128) * 16
+  #     end
+  #     scan_line_offset = (@scan_line - @window_y) % 8 * 2
+  #     byte_1 = @device.vram.read_byte(address + scan_line_offset)
+  #     byte_2 = @device.vram.read_byte(address + scan_line_offset + 1)
+
+  #     8.times do |index|
+  #       x = tile_x * 8 + @window_x + index
+
+  #       shift = 1.lshift8(7 - index)
+  #       color = (byte_1 & shift).rshift8(6 - index) +
+  #               (byte_2 & shift).rshift8(7 - index)
+
+  #       @framebuffer[@scan_line * SCREEN_WIDTH + x] = COLORS[color]
+  #     end
+  #   end
+
+  #   @window_line += 1
+  # end
 
   def signed_byte(value)
     value > 127 ? -256 + value : value
-  end
-
-  def draw_tile(tile, tile_x)
-    address = if @map_tiles_address == 0x8000
-      0x8000 + (tile * 16)
-    else
-      0x8800 + (signed_byte(tile) + 128) * 16
-    end
-    scan_line_offset = @scan_line % 8 * 2
-    byte_1 = @device.read_byte(address + scan_line_offset)
-    byte_2 = @device.read_byte(address + scan_line_offset + 1)
-
-    8.times do |index|
-      x = tile_x * 8 + index
-
-      next if x < 0 || x > SCREEN_WIDTH
-
-      shift = 1 << (7 - index)
-      color = (byte_1 & shift).rshift8(6 - index) +
-              (byte_2 & shift).rshift8(7 - index)
-      # color = ((byte_1 & shift) >> (6 - index)) +
-      #         ((byte_2 & shift) >> (7 - index))
-
-      @renderer.draw_color = rgb_color(color)
-      @renderer.draw_point(x, @scan_line)
-      # @framebuffer[@scan_line * SCREEN_WIDTH + (tile_x * 8 + index)] if tile_x * 8 + index >= 0 && tile_x * 8 + index < SCREEN_WIDTH
-    end
-  end
-
-  def draw_window
-    @window_x = @device.io_registers.get(IORegisters::WX) - 7
-    @window_y = @device.io_registers.get(IORegisters::WY)
-
-    @window_tiles_address = (@lcdc & LCDC_BG_WINDOW_TILE_DATA_SELECT == 0) ? 0x8800 : 0x8000
-
-    tile_y = (@scan_line + @scroll_y) / 8
-    32.times do |tile_x|
-      tile = @device.read_byte(@window_tiles_address + tile_x + tile_y * 32)
-      draw_tile(tile, tile_x)
-    end
   end
 
   def draw_sprites
     # TODO
   end
 
-  def rgb_color(gb_color)
-    # if gb_color == 3
-    #   [0x00, 0x00, 0x00]
-    # elsif gb_color == 2
-    #   [0xAA, 0xAA, 0xAA]
-    # elsif gb_color == 1
-    #   [0x55, 0x55, 0x55]
-    # else
-    #   [0xFF, 0xFF, 0xFF]
+  def rgb_color(color_code)
+    # case color_code
+    # when 0
+    #   0xFFDAF9CC# 0xFFFFFFFF
+    # when 1
+    #   0xFF76C365# 0xFFAAAAAA
+    # when 2
+    #   0xFF1b6A55# 0xFF555555
+    # when 3
+    #   0x00031821# 0x00000000
     # end
-    case gb_color
-    when 3 then [0x00, 0x00, 0x00]
-    when 2 then [0xAA, 0xAA, 0xAA]
-    when 1 then [0x55, 0x55, 0x55]
-    when 0 then [0xFF, 0xFF, 0xFF]
-    else
-      raise StandardError.new("Color #{gb_color} not allowed.")
-    end
   end
 
   def render
-    # @screen.render(@framebuffer)
-    @renderer.present
-    @renderer.clear
+    @screen.render(@framebuffer)
 
-    event = SDL2::Event.poll
-    case event
-    when SDL2::Event::Quit
-      exit
-    end
-
-    t = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-    fps = 1.0 / (t - @last)
-    fps = fps.floor(2).to_s
-    @last = t
-
-    @window.title = "#{fps} fps"
+    # FOR DEBUG ONLY
+    @framebuffer = Array.new(SCREEN_WIDTH * SCREEN_HEIGHT, 0xFFFF0000)
   end
 end

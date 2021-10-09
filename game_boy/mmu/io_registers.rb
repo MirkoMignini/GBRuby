@@ -12,7 +12,7 @@ class IORegisters < Memory
   LCDC  = 0x40.freeze
   STAT  = 0x41.freeze
   SCY   = 0x42.freeze
-  SCX   = 0x42.freeze
+  SCX   = 0x43.freeze
   LY    = 0x44.freeze
   LYC   = 0x45.freeze
   DMA   = 0x46.freeze
@@ -60,6 +60,15 @@ class IORegisters < Memory
     @memory[STAT] & 0b01000000 == 0b01000000
   end
 
+  def read_byte(address)
+    if address == 0xFF00
+      # @device.ppu.PumpEvents
+      0xFF
+    else
+      @memory[address - @offset]
+    end
+  end
+
   def write_byte(address, value)
     if (address - @offset == SC && value == 0x81)
       print @memory[1].chr
@@ -78,7 +87,6 @@ class IORegisters < Memory
       # bits 0-2 are read-only
       @memory[address - @offset] = (value & 0xf8) | (memory[address - @offset] & 0x07);
     elsif (address - @offset == DMA)
-      puts 'Performing DMA'
       # source = read_byte(address) << 8
       # 0x9F.times do |index|
       #   @device.write_byte(0xFE00 + index, @device.read_byte(address + index))

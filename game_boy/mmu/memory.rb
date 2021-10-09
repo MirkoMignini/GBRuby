@@ -9,11 +9,13 @@ class Memory
   end
 
   def read_byte(address)
-    value = @memory[address - @offset]
+    # value = @memory[address - @offset]
 
-    raise 'Memory cannot read value from address 0x%04X, %s' % [address, value] if value.nil? || !value.is_a?(Integer) || value < 0 || value > 0xFF
+    # raise 'Memory cannot read value from address 0x%04X, %s' % [address, value] if value.nil? || !value.is_a?(Integer) || value < 0 || value > 0xFF
 
-    return value
+    # return value
+
+    @memory[address - @offset]
   end
 
   def read_word(address)

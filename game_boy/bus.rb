@@ -26,7 +26,7 @@ module BUS
   end
 
   def read_byte(address)
-    raise StandardError.new('Cannot read address %04X' % [address]) if address > 0xFFFF || address < 0
+    # raise StandardError.new('Cannot read address %04X' % [address]) if address > 0xFFFF || address < 0
 
     if ( address < VRAM_ADDRESS )
       @cartridge.read_rom_byte(address)
@@ -53,8 +53,8 @@ module BUS
   end
 
   def write_byte(address, value)
-    raise 'BUS cannot write null or not int value to address 0x%04X, %s' % [address, value] if value.nil? || !value.is_a?(Integer)
-    raise 'BUS cannot write %02X to address 0x%04X' % [value, address] if value < 0 || value > 0xFF
+    # raise 'BUS cannot write null or not int value to address 0x%04X, %s' % [address, value] if value.nil? || !value.is_a?(Integer)
+    # raise 'BUS cannot write %02X to address 0x%04X' % [value, address] if value < 0 || value > 0xFF
 
     if ( address < VRAM_ADDRESS )
       @cartridge.write_rom_byte(address, value)

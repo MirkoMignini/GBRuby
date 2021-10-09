@@ -64,11 +64,11 @@ class PPU
   # If the values are the same it causes the STAT to set the coincident flag.
   LYC = 0x45
 
-  MODE_MASK = 0b11111100
-  MODE_0 = 0 # During H-Blank
-  MODE_1 = 1 # During V-Blank
-  MODE_2 = 2 # During Searching OAM-RAM
-  MODE_3 = 3 # During Transfering Data to LCD Driver
+  MODE_MASK = 0b11111100.freeze
+  MODE_0 = 0.freeze # During H-Blank
+  MODE_1 = 1.freeze # During V-Blank
+  MODE_2 = 2.freeze # During Searching OAM-RAM
+  MODE_3 = 3.freeze # During Transfering Data to LCD Driver
 
   SCREEN_WIDTH = 160.freeze
   SCREEN_HEIGHT = 144.freeze
@@ -78,8 +78,8 @@ class PPU
   MODE_0_LIMIT = 456.freeze
   MODE_1_LIMIT = 456.freeze
 
-  COLORS = [0xFFDAF9CC, 0xFF76C365, 0xFF1b6A55, 0x00031821].freeze
-  # COLORS = [0xFFFFFFFF, 0xFFAAAAAA, 0xFF555555, 0x00000000].freeze
+  # COLORS = [0xFFDAF9CC, 0xFF76C365, 0xFF1b6A55, 0x00031821].freeze
+  COLORS = [0xFFFFFFFF, 0xFFAAAAAA, 0xFF555555, 0x00000000].freeze
 
   LAST_SCANLINE = 153.freeze
 
@@ -91,6 +91,13 @@ class PPU
   LCDC_SPRITE_SIZE                 = 4   # Bit 2 - OBJ (Sprite) Size              (0=8x8, 1=8x16)
   LCDC_SPRITE_DISPLAY_ENABLE       = 2   # Bit 1 - OBJ (Sprite) Display Enable    (0=Off, 1=On)
   LCDC_BG_WINDOW_DISPLAY           = 1   # Bit 0 - BG/Window Display/Priority     (0=Off, 1=On)
+
+  OAM_ADDRESS = 0xFE00.freeze
+
+  SPRITE_ATTRIB_PRIORITY  = 0b10000000.freeze
+  SPRITE_ATTRIB_FLIPY     = 0b01000000.freeze
+  SPRITE_ATTRIB_FLIPX     = 0b00100000.freeze
+  SPRITE_ATTRIB_PALETTE   = 0b00010000.freeze
 
   attr_reader :window
 
@@ -182,8 +189,8 @@ class PPU
 
   def draw_scan_line
     draw_tiles if @lcdc & LCDC_BG_WINDOW_DISPLAY == LCDC_BG_WINDOW_DISPLAY
-    # draw_window if @lcdc & LCDC_WIN_DISPLAY_ENABLE == LCDC_WIN_DISPLAY_ENABLE
-    # draw_sprites if @lcdc & LCDC_SPRITE_DISPLAY_ENABLE == LCDC_SPRITE_DISPLAY_ENABLE
+    draw_window if @lcdc & LCDC_WIN_DISPLAY_ENABLE == LCDC_WIN_DISPLAY_ENABLE
+    draw_sprites if @lcdc & LCDC_SPRITE_DISPLAY_ENABLE == LCDC_SPRITE_DISPLAY_ENABLE
   end
 
   def setup_palette(palette)
@@ -198,7 +205,6 @@ class PPU
 
   def draw_tiles
     @palette = setup_palette(IORegisters::BGP)
-    # puts @palette.inspect
 
     @scroll_x = @device.io_registers.get(IORegisters::SCX)
     @scroll_y = @device.io_registers.get(IORegisters::SCY)
@@ -264,56 +270,102 @@ class PPU
     end
   end
 
-  # def draw_window
-  #   @window_y = @device.io_registers.get(IORegisters::WY)
+  def draw_window
+    @window_y = @device.io_registers.get(IORegisters::WY)
 
-  #   return if @window_y > @scan_line
+    return if @window_y > @scan_line
 
-  #   @window_x = @device.io_registers.get(IORegisters::WX) - 7
+    @window_x = @device.io_registers.get(IORegisters::WX) - 7
 
-  #   return if @window_x < 0 || @window_x >= 160
+    return if @window_x < 0 || @window_x >= 160
 
-  #   @map_tiles_address = (@lcdc & LCDC_BG_WINDOW_TILE_DATA_SELECT == 0) ? 0x8800 : 0x8000
-  #   @win_tiles_map_address = (@lcdc & LCDC_WIN_TILE_MAP_DISPLAY_SELECT == 0) ? 0x9800 : 0x9C00
+    @map_tiles_address = (@lcdc & LCDC_BG_WINDOW_TILE_DATA_SELECT == 0) ? 0x8800 : 0x8000
+    @win_tiles_map_address = (@lcdc & LCDC_WIN_TILE_MAP_DISPLAY_SELECT == 0) ? 0x9800 : 0x9C00
 
-  #   tile_y = (@scan_line - @window_y) / 8
+    tile_y = (@scan_line - @window_y) / 8
 
-  #   20.times do |tile_x|
-  #     next if (tile_x * 8 < @window_x)
+    20.times do |tile_x|
+      next if (tile_x * 8 < @window_x)
 
-  #     tile_x = (tile_x * 8 - @window_x) / 8
+      tile_x = (tile_x * 8 - @window_x) / 8
 
-  #     tile = @device.vram.read_byte(@win_tiles_map_address + tile_x + tile_y * 32)
+      tile = @device.vram.read_byte(@win_tiles_map_address + tile_x + tile_y * 32)
 
-  #     address = if @map_tiles_address == 0x8000
-  #       0x8000 + (tile * 16)
-  #     else
-  #       0x8800 + (signed_byte(tile) + 128) * 16
-  #     end
-  #     scan_line_offset = (@scan_line - @window_y) % 8 * 2
-  #     byte_1 = @device.vram.read_byte(address + scan_line_offset)
-  #     byte_2 = @device.vram.read_byte(address + scan_line_offset + 1)
+      address = if @map_tiles_address == 0x8000
+        0x8000 + (tile * 16)
+      else
+        0x8800 + (signed_byte(tile) + 128) * 16
+      end
+      scan_line_offset = (@scan_line - @window_y) % 8 * 2
+      byte_1 = @device.vram.read_byte(address + scan_line_offset)
+      byte_2 = @device.vram.read_byte(address + scan_line_offset + 1)
 
-  #     8.times do |index|
-  #       x = tile_x * 8 + @window_x + index
+      8.times do |index|
+        x = tile_x * 8 + @window_x + index
 
-  #       shift = 1.lshift8(7 - index)
-  #       color = (byte_1 & shift).rshift8(6 - index) +
-  #               (byte_2 & shift).rshift8(7 - index)
+        shift = 1.lshift8(7 - index)
+        color = (byte_1 & shift).rshift8(7 - index) +
+                (byte_2 & shift).rshift8(6 - index)
 
-  #       @framebuffer[@scan_line * SCREEN_WIDTH + x] = COLORS[color]
-  #     end
-  #   end
+        @framebuffer[@scan_line * SCREEN_WIDTH + x] = COLORS[color]
+      end
+    end
 
-  #   @window_line += 1
-  # end
+    @window_line += 1
+  end
 
   def signed_byte(value)
     value > 127 ? -256 + value : value
   end
 
   def draw_sprites
-    # TODO
+    sprite_height = (@lcdc & LCDC_SPRITE_SIZE == 0) ? 8 : 16
+    sprite_per_line = 0
+
+    40.times do |index|
+      sprite_address = OAM_ADDRESS + index * 4
+      pos_y = @device.oam.read_byte(sprite_address) - 16
+
+      next unless ((@scan_line >= pos_y) && (@scan_line < (pos_y + sprite_height)))
+
+      pos_x = @device.oam.read_byte(sprite_address + 1) - 8
+
+      # TODO: check if x out of bounds
+
+      tile = @device.oam.read_byte(sprite_address + 2)
+      attributes = @device.oam.read_byte(sprite_address + 3)
+
+      flip_y = attributes & SPRITE_ATTRIB_FLIPY == SPRITE_ATTRIB_FLIPY
+      flip_x = attributes & SPRITE_ATTRIB_FLIPX == SPRITE_ATTRIB_FLIPX
+      priority = attributes & SPRITE_ATTRIB_PRIORITY == SPRITE_ATTRIB_PRIORITY
+      palette = setup_palette(IORegisters::OBP0 + ((attributes & SPRITE_ATTRIB_PALETTE) >> 4) )
+
+      offset = @scan_line - pos_y
+      offset = 7 - offset if flip_y
+      address = 0x8000 + (tile * 16) + (offset * 2)
+
+      byte_1 = @device.vram.read_byte(address)
+      byte_2 = @device.vram.read_byte(address + 1)
+
+      8.times do |x|
+        next if pos_x + x < 0
+        break if pos_x + x >= 160
+
+        flip_offset = flip_x ? 7 - x : x
+        shift = 1.lshift8(7 - flip_offset)
+        color = (byte_1 & shift).rshift8(7 - flip_offset) +
+                (byte_2 & shift).rshift8(6 - flip_offset)
+
+        position = @scan_line * SCREEN_WIDTH + pos_x + x
+
+        next if color == 0 || (priority && @framebuffer[position] != @palette[0])
+
+        @framebuffer[position] = palette[color]
+      end
+
+      sprite_per_line += 1
+      break if sprite_per_line == 10
+    end
   end
 
   def render

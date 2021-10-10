@@ -1,8 +1,8 @@
-require_relative 'sdl'
-require_relative 'screen'
+require_relative 'sdl2'
+require_relative 'video'
 
 class PPU
-  include SDL
+  include SDL2
   # screen 160 x 144
 
   # Mode 00: When the flag is 00 it is the H-Blank
@@ -53,16 +53,9 @@ class PPU
   # Vertical blank	                  1	                  4560 (10 lines)
   # Full frame (scans and vblank)		                      70224
 
-  # STAT shows the current status of the LCD controller.
-  STAT = 0x41
-
   # The LY indicates the vertical line to which the present data is transferred to the LCD
   # Driver. The LY can take on any value between 0 through 153. The values between
   # 144 and 153 indicate the V-Blank period. Writing will reset the counter.
-
-  # The LYC compares itself with the LY.
-  # If the values are the same it causes the STAT to set the coincident flag.
-  LYC = 0x45
 
   MODE_MASK = 0b11111100.freeze
   MODE_0 = 0.freeze # During H-Blank
@@ -108,7 +101,7 @@ class PPU
     @cycles = 0
 
     @framebuffer = Array.new(SCREEN_WIDTH * SCREEN_HEIGHT, 0)
-    @screen = Screen.new
+    @video = Video.new
   end
 
   def step(cycles)
@@ -372,7 +365,7 @@ class PPU
   end
 
   def render
-    @screen.render(@framebuffer)
+    @video.render(@framebuffer)
 
     # FOR DEBUG ONLY
     # @framebuffer = Array.new(SCREEN_WIDTH * SCREEN_HEIGHT, 0xFFFF0000)

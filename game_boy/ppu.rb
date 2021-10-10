@@ -333,6 +333,9 @@ class PPU
       # TODO: check if x out of bounds
 
       tile = @device.oam.read_byte(sprite_address + 2)
+      # Bit 0 of tile index for 8x16 objects should be ignored
+      tile &= 0b11111110 if sprite_height == 16
+
       attributes = @device.oam.read_byte(sprite_address + 3)
 
       flip_y = attributes & SPRITE_ATTRIB_FLIPY == SPRITE_ATTRIB_FLIPY
@@ -341,7 +344,7 @@ class PPU
       palette = setup_palette(IORegisters::OBP0 + ((attributes & SPRITE_ATTRIB_PALETTE) >> 4) )
 
       offset = @scan_line - pos_y
-      offset = 7 - offset if flip_y
+      offset = sprite_height - offset - 1 if flip_y
       address = 0x8000 + (tile * 16) + (offset * 2)
 
       byte_1 = @device.vram.read_byte(address)
@@ -372,6 +375,6 @@ class PPU
     @screen.render(@framebuffer)
 
     # FOR DEBUG ONLY
-    @framebuffer = Array.new(SCREEN_WIDTH * SCREEN_HEIGHT, 0xFFFF0000)
+    # @framebuffer = Array.new(SCREEN_WIDTH * SCREEN_HEIGHT, 0xFFFF0000)
   end
 end

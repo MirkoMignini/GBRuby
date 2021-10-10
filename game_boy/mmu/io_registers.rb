@@ -90,18 +90,7 @@ class IORegisters < Memory
       # bits 0-2 are read-only
       @memory[address - @offset] = (value & 0xf8) | (memory[address - @offset] & 0x07);
     elsif (address - @offset == DMA)
-      # source = read_byte(address) << 8
-      # 0x9F.times do |index|
-      #   @device.write_byte(0xFE00 + index, @device.read_byte(address + index))
-      # end
-      source = value << 8
-      # if addr >= 0x8000 && addr < 0xE000
-        0x9F.times do |index|
-          @device.write_byte(0xFE00 + index, @device.read_byte(source + index))
-        end
-      # else
-      #   puts 'DMA out of range'
-      # end
+      @device.oam.dma(value)
     else
       @memory[address - @offset] = value
     end

@@ -52,6 +52,16 @@ module BUS
     (read_byte(address + 1) << 8) + read_byte(address)
   end
 
+  def read_memory(address, size)
+    if address < CART_RAM_ADDRESS
+      @vram.read_memory(address, size)
+    elsif address < WRAM_ADDRESS
+      @cartridge.read_ram_memory(address, size)
+    elsif address < ECHO_ADDRESS
+      @wram.read_memory(address, size)
+    end
+  end
+
   def write_byte(address, value)
     # raise 'BUS cannot write null or not int value to address 0x%04X, %s' % [address, value] if value.nil? || !value.is_a?(Integer)
     # raise 'BUS cannot write %02X to address 0x%04X' % [value, address] if value < 0 || value > 0xFF

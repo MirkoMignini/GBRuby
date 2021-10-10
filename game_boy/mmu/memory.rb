@@ -25,4 +25,12 @@ class Memory
   def write_byte(address, value)
     @memory[address - @offset] = value
   end
+
+  def read_memory(address, size)
+    @memory[address - @offset, size]
+  end
+
+  def write_memory(address, bytes)
+    @memory[address - @offset, bytes.size] = bytes
+  end
 end

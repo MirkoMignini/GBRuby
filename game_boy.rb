@@ -1,6 +1,7 @@
-require_relative 'game_boy/debugger'
 require_relative 'game_boy/bus'
 require_relative 'game_boy/cpu'
+require_relative 'game_boy/debugger'
+require_relative 'game_boy/input'
 require_relative 'game_boy/ppu'
 require_relative 'game_boy/timer'
 require 'sdl2'
@@ -11,12 +12,14 @@ class GameBoy
 
   CYCLES_PER_FRAME = 70_224.freeze
 
-  attr_reader :cpu, :bus, :ppu, :cartridge, :timer, :io_registers, :hram, :vram, :oam
+  attr_reader :cpu, :bus, :ppu, :cartridge, :timer, :io_registers, :hram, :vram, :oam, :input
 
   def initialize
     init_bus
+
     @cpu = CPU.new(self)
     @ppu = PPU.new(self)
+    @input = Input.new(self)
     @timer = Timer.new(self)
   end
 

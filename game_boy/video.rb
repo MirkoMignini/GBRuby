@@ -14,7 +14,6 @@ class Video
     SDL2.RenderSetLogicalSize(@renderer, WINDOW_WIDTH, WINDOW_HEIGHT)
     @texture = SDL2.CreateTexture @renderer, SDL2::PIXELFORMAT_ARGB8888, 1, SCREEN_WIDTH, SCREEN_HEIGHT
     @last = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-    @event = FFI::MemoryPointer.new(:uint32, 16)
 
     @titles = (0..200).map {|n| "GBRuby (%d fps)" % n }
   end
@@ -37,13 +36,6 @@ class Video
     SDL2.RenderClear @renderer
     SDL2.RenderCopy @renderer, @texture, nil, nil
     SDL2.RenderPresent @renderer
-
-    while SDL2.PollEvent(@event) != 0
-      case @event.read_int
-      when 0x100 # SDL_QUIT
-        exit
-      end
-    end
 
     fps = 200 if fps > 200
     SDL2.SetWindowTitle(@window, @titles[fps])

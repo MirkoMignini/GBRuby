@@ -4,6 +4,24 @@ module SDL2
   extend FFI::Library
   ffi_lib "SDL2"
 
+  class KeyboardEvent < FFI::Struct
+    layout(
+      :type, :uint32,
+      :timestamp, :uint32,
+      :windowID, :uint32,
+      :state, :uint8,
+      :repeat, :uint8,
+      :padding2, :uint8,
+      :padding3, :uint8,
+      :scancode, :int,
+      :sym, :int,
+    )
+  end
+
+  EVENT_QUIT    = 0x100.freeze
+  EVENT_KEYDOWN = 0x300.freeze
+  EVENT_KEYUP   = 0x301.freeze
+
   WINDOW_FULLSCREEN         = 0x00000001
   WINDOW_OPENGL             = 0x00000002
   WINDOW_SHOWN              = 0x00000004

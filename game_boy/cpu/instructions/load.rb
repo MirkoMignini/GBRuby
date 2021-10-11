@@ -9,12 +9,12 @@ module Load
   def ld_h_a_hl; @h = read_byte(hl); end
   def ld_l_a_hl; @l = read_byte(hl); end
 
-  def ld_a_a_c; raise NotImplementedError.new('ld_a_a_c instruction not implemented yet'); end
+  def ld_a_a_c; @a = read_byte((0xFF00 + @c) & 0xFFFF); end
   def ld_a_a_a16; @a = read_byte(pc_read_word); end
 
   def ld_a_a16_a; write_byte(pc_read_word, @a); end
   def ld_a_a16_sp; write_word(pc_read_word, @sp); end
-  def ld_a_c_a; write_byte(0xFF00 + @c & 0xFFFF, @a); end
+  def ld_a_c_a; write_byte((0xFF00 + @c) & 0xFFFF, @a); end
   def ld_a_d8; @a = pc_read_byte; end
 
   def ld_a_bc_a; write_byte(bc, @a); end

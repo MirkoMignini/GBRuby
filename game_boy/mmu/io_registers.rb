@@ -12,10 +12,13 @@ class IORegisters < Memory
   LCDC  = 0x40.freeze
   STAT  = 0x41.freeze
   SCY   = 0x42.freeze
-  SCX   = 0x42.freeze
+  SCX   = 0x43.freeze
   LY    = 0x44.freeze
   LYC   = 0x45.freeze
   DMA   = 0x46.freeze
+  BGP   = 0x47.freeze
+  OBP0  = 0x48.freeze
+  OBP1  = 0x49.freeze
   WY    = 0x4A.freeze
   WX    = 0x4B.freeze
 
@@ -44,6 +47,14 @@ class IORegisters < Memory
     end
   end
 
+  def lcdc
+    @memory[LCDC]
+  end
+
+  def ly
+    @memory[LY]
+  end
+
   def lcd_mode
     @memory[STAT] & 0b00000011
   end
@@ -58,6 +69,15 @@ class IORegisters < Memory
 
   def coincidence_flag_enabled?
     @memory[STAT] & 0b01000000 == 0b01000000
+  end
+
+  def read_byte(address)
+    if address == 0xFF00
+      # @device.ppu.PumpEvents
+      0xFF
+    else
+      @memory[address - @offset]
+    end
   end
 
   def write_byte(address, value)
@@ -78,19 +98,7 @@ class IORegisters < Memory
       # bits 0-2 are read-only
       @memory[address - @offset] = (value & 0xf8) | (memory[address - @offset] & 0x07);
     elsif (address - @offset == DMA)
-      puts 'Performing DMA'
-      # source = read_byte(address) << 8
-      # 0x9F.times do |index|
-      #   @device.write_byte(0xFE00 + index, @device.read_byte(address + index))
-      # end
-      source = value << 8
-      # if addr >= 0x8000 && addr < 0xE000
-        0x9F.times do |index|
-          @device.write_byte(0xFE00 + index, @device.read_byte(source + index))
-        end
-      # else
-      #   puts 'DMA out of range'
-      # end
+      @device.oam.dma(value)
     else
       @memory[address - @offset] = value
     end

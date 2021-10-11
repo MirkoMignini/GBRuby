@@ -7,4 +7,4 @@ ruby '3.0.1'
 
 gem 'bit-twiddle'
 gem 'byebug'
-gem 'ruby-sdl2'
+gem 'ffi'

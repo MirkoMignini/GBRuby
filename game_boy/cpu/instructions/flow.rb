@@ -63,4 +63,6 @@ module Flow
   def halt
     @halted = true
   end
+
+  def stop_0; raise NotImplementedError.new('stop_0 instruction not implemented yet'); end
 end

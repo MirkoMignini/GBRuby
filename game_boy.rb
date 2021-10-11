@@ -3,8 +3,7 @@ require_relative 'game_boy/bus'
 require_relative 'game_boy/cpu'
 require_relative 'game_boy/ppu'
 require_relative 'game_boy/timer'
-
-require 'benchmark'
+require 'sdl2'
 
 class GameBoy
   include BUS
@@ -12,7 +11,7 @@ class GameBoy
 
   CYCLES_PER_FRAME = 70_224.freeze
 
-  attr_reader :cpu, :bus, :ppu, :cartridge, :timer, :io_registers, :hram
+  attr_reader :cpu, :bus, :ppu, :cartridge, :timer, :io_registers, :hram, :vram, :oam
 
   def initialize
     init_bus

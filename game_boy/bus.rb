@@ -15,6 +15,8 @@ module BUS
   IO_REGISTERS_ADDRESS  = 0xFF00.freeze
   HRAM_ADDRESS          = 0xFF80.freeze
 
+  attr_reader :io_registers, :hram
+
   def init_bus
     @vram = VRAM.new(self)
     @wram = WRAM.new(self)
@@ -24,7 +26,7 @@ module BUS
   end
 
   def read_byte(address)
-    raise StandardError.new('Cannot read address %04X' % [address]) if address > 0xFFFF || address < 0
+    # raise StandardError.new('Cannot read address %04X' % [address]) if address > 0xFFFF || address < 0
 
     if ( address < VRAM_ADDRESS )
       @cartridge.read_rom_byte(address)
@@ -50,9 +52,19 @@ module BUS
     (read_byte(address + 1) << 8) + read_byte(address)
   end
 
+  def read_memory(address, size)
+    if address < CART_RAM_ADDRESS
+      @vram.read_memory(address, size)
+    elsif address < WRAM_ADDRESS
+      @cartridge.read_ram_memory(address, size)
+    elsif address < ECHO_ADDRESS
+      @wram.read_memory(address, size)
+    end
+  end
+
   def write_byte(address, value)
-    raise 'BUS cannot write null value to address 0x%04X' % [address] if value.nil?
-    raise 'BUS cannot write %02X to address 0x%04X' % [value, address] if value < 0 || value > 0xFF
+    # raise 'BUS cannot write null or not int value to address 0x%04X, %s' % [address, value] if value.nil? || !value.is_a?(Integer)
+    # raise 'BUS cannot write %02X to address 0x%04X' % [value, address] if value < 0 || value > 0xFF
 
     if ( address < VRAM_ADDRESS )
       @cartridge.write_rom_byte(address, value)

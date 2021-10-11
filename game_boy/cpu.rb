@@ -23,6 +23,8 @@ class CPU
     setup_registers
     setup_interrupts
 
+    @unique = []
+
     @halted = false
   end
 
@@ -76,8 +78,17 @@ class CPU
 
     begin
       fetch
+      # @unique << @instruction[:method]
+      # @unique.uniq!
+      # puts @unique.join(' - ')
+
+      # if @initial_pc == 0x0b7a
+        # puts debug_instruction(@initial_pc, @instruction)
+      #   exit
+      # end
       execute
     rescue StandardError => e
+      puts @unique.join(' - ')
       puts "%04X %s" % [@initial_pc, @instruction]
       puts e.backtrace
       puts e

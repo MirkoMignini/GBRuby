@@ -3,6 +3,7 @@ require_relative 'memory'
 class IORegisters < Memory
   # FF00..FF7F  I/O Registers
 
+  JOYP  = 0x00.freeze
   SC    = 0x02.freeze
   DIV   = 0x04.freeze
   TIMA  = 0x05.freeze
@@ -73,8 +74,7 @@ class IORegisters < Memory
 
   def read_byte(address)
     if address == 0xFF00
-      # @device.ppu.PumpEvents
-      0xFF
+      @device.input.read_keyboard(@memory[JOYP])
     else
       @memory[address - @offset]
     end

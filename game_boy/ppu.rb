@@ -377,7 +377,7 @@ class PPU
 
   def render
     @video.render(@framebuffer)
-
+    @device.input.step
     # FOR DEBUG ONLY
     # @framebuffer = Array.new(SCREEN_WIDTH * SCREEN_HEIGHT, 0xFFFF0000)
   end

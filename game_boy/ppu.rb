@@ -121,8 +121,6 @@ class PPU
     @scan_line = @device.io_registers.ly
     @mode = @device.io_registers.lcd_mode
 
-    # puts ("Cycles: #{@cycles} - Mode: #{@mode} - line: #{@scan_line}")
-
     # updated current cycles
     @cycles += cycles
 
@@ -137,6 +135,7 @@ class PPU
         @cycles = 0
         @device.cpu.request_interrupt(CPU::INTERRUPT_VBLANK)
         render
+        @window_line = 0
       else
         @device.io_registers.lcd_mode = 2
         @cycles = 0
@@ -164,7 +163,6 @@ class PPU
       draw_scan_line if @scan_line < SCREEN_HEIGHT
 
       @device.io_registers.lcd_mode = 0
-      @window_line = 0
     end
   end
 
@@ -265,17 +263,16 @@ class PPU
 
   def draw_window
     @window_y = @device.io_registers.get(IORegisters::WY)
+    @window_x = @device.io_registers.get(IORegisters::WX)
 
-    return if @window_y > @scan_line
+    return unless (@window_x <= 166 && @window_y <= 143 && @window_line <= 143 && @scan_line >= @window_y)
 
-    @window_x = @device.io_registers.get(IORegisters::WX) - 7
-
-    return if @window_x < 0 || @window_x >= 160
+    @window_x -= 7
 
     @map_tiles_address = (@lcdc & LCDC_BG_WINDOW_TILE_DATA_SELECT == 0) ? 0x8800 : 0x8000
     @win_tiles_map_address = (@lcdc & LCDC_WIN_TILE_MAP_DISPLAY_SELECT == 0) ? 0x9800 : 0x9C00
 
-    tile_y = (@scan_line - @window_y) / 8
+    tile_y = (@window_line >> 3) & 0x1F
 
     20.times do |tile_x|
       next if (tile_x * 8 < @window_x)
@@ -289,7 +286,7 @@ class PPU
       else
         0x8800 + (signed_byte(tile) + 128) * 16
       end
-      scan_line_offset = (@scan_line - @window_y) % 8 * 2
+      scan_line_offset = (@window_line - @window_y) % 8 * 2
       byte_1 = @device.vram.read_byte(address + scan_line_offset)
       byte_2 = @device.vram.read_byte(address + scan_line_offset + 1)
 
@@ -331,10 +328,14 @@ class PPU
         pos_x: pos_x
       }
 
+      # Max 10 objects per scanline
       sprites_per_line += 1
       break if sprites_per_line == 10
     end
 
+    # the smaller the X coordinate, the higher the priority.
+    # When X coordinates are identical, the object located first
+    # in OAM has higher priority.
     sprites.sort_by! { |s| [-s[:pos_x], -s[:address]] }
 
     sprites.each do |sprite|

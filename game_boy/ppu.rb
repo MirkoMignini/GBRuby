@@ -105,7 +105,7 @@ class PPU
   end
 
   def step(cycles)
-    @lcdc = @device.io_registers.get(IORegisters::LCDC)
+    @lcdc = @device.io_registers.lcdc
 
     # If LCD is disabled does nothing (LCDC bit 7 off)
     return if @lcdc & LCDC_DISPLAY_ENABLE == 0
@@ -118,7 +118,7 @@ class PPU
     #   return
     # end
 
-    @scan_line = @device.io_registers.get(IORegisters::LY)
+    @scan_line = @device.io_registers.ly
     @mode = @device.io_registers.lcd_mode
 
     # puts ("Cycles: #{@cycles} - Mode: #{@mode} - line: #{@scan_line}")
@@ -313,7 +313,9 @@ class PPU
 
   def draw_sprites
     sprite_height = (@lcdc & LCDC_SPRITE_SIZE == 0) ? 8 : 16
-    sprite_per_line = 0
+    sprites_per_line = 0
+
+    sprites = []
 
     40.times do |index|
       sprite_address = OAM_ADDRESS + index * 4
@@ -323,20 +325,31 @@ class PPU
 
       pos_x = @device.oam.read_byte(sprite_address + 1) - 8
 
-      # TODO: check if x out of bounds
+      sprites << {
+        address: sprite_address,
+        pos_y: pos_y,
+        pos_x: pos_x
+      }
 
-      tile = @device.oam.read_byte(sprite_address + 2)
+      sprites_per_line += 1
+      break if sprites_per_line == 10
+    end
+
+    sprites.sort_by! { |s| [-s[:pos_x], -s[:address]] }
+
+    sprites.each do |sprite|
+      tile = @device.oam.read_byte(sprite[:address] + 2)
       # Bit 0 of tile index for 8x16 objects should be ignored
       tile &= 0b11111110 if sprite_height == 16
 
-      attributes = @device.oam.read_byte(sprite_address + 3)
+      attributes = @device.oam.read_byte(sprite[:address] + 3)
 
       flip_y = attributes & SPRITE_ATTRIB_FLIPY == SPRITE_ATTRIB_FLIPY
       flip_x = attributes & SPRITE_ATTRIB_FLIPX == SPRITE_ATTRIB_FLIPX
       priority = attributes & SPRITE_ATTRIB_PRIORITY == SPRITE_ATTRIB_PRIORITY
       palette = setup_palette(IORegisters::OBP0 + ((attributes & SPRITE_ATTRIB_PALETTE) >> 4) )
 
-      offset = @scan_line - pos_y
+      offset = @scan_line - sprite[:pos_y]
       offset = sprite_height - offset - 1 if flip_y
       address = 0x8000 + (tile * 16) + (offset * 2)
 
@@ -344,23 +357,20 @@ class PPU
       byte_2 = @device.vram.read_byte(address + 1)
 
       8.times do |x|
-        next if pos_x + x < 0
-        break if pos_x + x >= 160
+        next if sprite[:pos_x] + x < 0
+        break if sprite[:pos_x] + x >= 160
 
         flip_offset = flip_x ? 7 - x : x
         shift = 1.lshift8(7 - flip_offset)
         color = (byte_1 & shift).rshift8(7 - flip_offset) +
                 (byte_2 & shift).rshift8(6 - flip_offset)
 
-        position = @scan_line * SCREEN_WIDTH + pos_x + x
+        position = @scan_line * SCREEN_WIDTH + sprite[:pos_x] + x
 
         next if color == 0 || (priority && @framebuffer[position] != @palette[0])
 
         @framebuffer[position] = palette[color]
       end
-
-      sprite_per_line += 1
-      break if sprite_per_line == 10
     end
   end
 

@@ -47,6 +47,14 @@ class IORegisters < Memory
     end
   end
 
+  def lcdc
+    @memory[LCDC]
+  end
+
+  def ly
+    @memory[LY]
+  end
+
   def lcd_mode
     @memory[STAT] & 0b00000011
   end

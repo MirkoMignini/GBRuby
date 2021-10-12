@@ -15,7 +15,7 @@ module BUS
   IO_REGISTERS_ADDRESS  = 0xFF00.freeze
   HRAM_ADDRESS          = 0xFF80.freeze
 
-  attr_reader :io_registers, :hram
+  attr_reader :io_registers, :hram, :vram, :oam
 
   def init_bus
     @vram = VRAM.new(self)

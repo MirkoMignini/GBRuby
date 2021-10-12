@@ -2,8 +2,7 @@ require_relative 'sdl2'
 require_relative 'video'
 
 class PPU
-  include SDL2
-  # screen 160 x 144
+  include SDL2\
 
   # Mode 00: When the flag is 00 it is the H-Blank
   # period and the CPU can access the display
@@ -18,31 +17,10 @@ class PPU
   # display RAM are being used. The CPU cannot
   # access either during this period.
 
-  # The Mode Flag goes through the values 0, 2,
-  # and 3 at a cycle of about 109uS. 0 is present
-  # about 48.6uS, 2 about 19uS, and 3 about 41uS.
-  # This is interrupted every 16.6ms by the VBlank
-  # (1). The mode flag stays set at 1 for about 1.08
-  # ms. (Mode 0 is present between 201-207 clks, 2
-  # about 77-83 clks, and 3 about 169-175 clks. A
-  # complete cycle through these states takes 456
-  # clks. VBlank lasts 4560 clks. A complete screen
-  # refresh occurs every 70224 clks.)
-
-  # The screen resolution is 160x144 meaning there are 144 visible scanlines.
-  # The Gameboy draws each scanline one at a time starting from 0 to 153,
-  # this means there are 144 visible scanlines and 8 invisible scanlines.
-  # When the current scanline is between 144 and 153 this is the vertical blank period.
-  # The current scanline is stored in register address 0xFF44.
-  # The pandocs tell us that it takes 456 cpu clock cycles to draw one scanline
-
   # Complete refresh: 456 for a scanline
   # Every: 70_224
-
   # 456 * 144 = 65664 + 4560 = 70224
-
   # Clock: 4_194_304
-
   # 4_194_304 / 70_224 = 59.7275
 
   # Period	                    GPU mode number	    Time spent (clocks)

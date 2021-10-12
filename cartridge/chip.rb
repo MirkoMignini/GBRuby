@@ -6,8 +6,8 @@ class Chip
   attr_reader :rom, :ram, :cartridge
 
   def initialize(cartridge, bytes)
-    @rom = Array.new(cartridge.rom_size) { 0x0 }
-    @ram = Array.new(cartridge.ram_size) { 0x0 }
+    @rom = Array.new(cartridge.header.rom_size) { 0x0 }
+    @ram = Array.new(cartridge.header.ram_size) { 0x0 }
 
     @rom[0, bytes.size] = bytes
   end

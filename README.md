@@ -11,19 +11,24 @@ The challenge is to write something good enough to play games and check if it is
 
 ## Screenshots from various games
 
+| ![ Tetris ](screenshots/tetris.png) | ![ Tetris ](screenshots/tetris2.png)  |
+|--------------------------------------------|--------------------------------|
+| ![ Zelda ](screenshots/zelda.png)   | ![ Zelda ](screenshots/zelda2.png)    |
+
 ## Tests
 
 There are no automated tests yet, but GBRuby pass some common tests ROM. I will add more and more.
 
-| ![ DMG Acid 2 ] (screenshots\dmg-acid2.png) | ![ Blargg‘s CPU Tests ] (screenshots\cpu_instr.png) |
-|-----------------------------------------------------|-----------------------------------------------------|
-| DMG Acid2                                           | Blargg‘s CPU Tests                                  |
+| ![ DMG Acid 2 ](screenshots/dmg-acid2.png) | ![ Blargg‘s CPU Tests ](screenshots/cpu_instr.png)  |
+|--------------------------------------------|-----------------------------------------------------|
+| DMG Acid2                                  | Blargg‘s CPU Tests                                  |
 
 ## Roadmap
 
 - Boot sequence
 - Add automated testing using Github Actions.
 - Support to cartridge type other than MBC1.
+- Optimizations to reach constant 60 FPS with every game.
 - Command line interface.
 - Configuration file.
 - Sound support.

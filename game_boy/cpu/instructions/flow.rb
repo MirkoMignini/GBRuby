@@ -64,5 +64,5 @@ module Flow
     @halted = true
   end
 
-  def stop_0; raise NotImplementedError.new('stop_0 instruction not implemented yet'); end
+  def stop_0; pc_read_byte; end
 end

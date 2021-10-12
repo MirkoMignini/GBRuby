@@ -1,41 +1,53 @@
+require_relative 'cartridge/chip'
+require_relative 'cartridge/header'
+require_relative 'cartridge/mbc1'
+
 class Cartridge
-  # 0x0000..0x7FFF  16KB ROM
-  # 0xA000..0xBFFF  8KB RAM
-
-  ROM_LIMIT = 0x7FFF
-  RAM_OFFSET = 0xA000
-
-  attr_reader :rom, :ram
+  attr_reader :chip, :header
 
   def initialize(filename)
-    @rom = Array.new(0x8000) { 0x0 }
-    @ram = Array.new(0x2000) { 0x0 }
+    @bytes = File.open(filename, 'rb').read.bytes
+    @header = Header.new(@bytes)
 
-    contents = File.open(filename, 'rb').read
-    @rom[0, contents.size] = contents.bytes
+    init_chip
+  end
+
+  def init_chip
+    case @header.cartridge_type
+    when 0
+      @chip = Chip.new(self, @bytes)
+    when 1, 2, 3
+      @chip = Mbc1.new(self, @bytes)
+    else
+      raise NotImplementedError.new('Cartridge type %02X not supported yet.' % [@header.cartridge_type])
+    end
   end
 
   def read_rom_byte(address)
-    @rom[address]
+    @chip.read_rom_byte(address)
   end
 
   def read_ram_byte(address)
-    @ram[address - RAM_OFFSET]
+    @chip.read_ram_byte(address)
   end
 
   def read_rom_word(address)
-    (@rom[address + 1] << 8) + @rom[address]
+    @chip.read_rom_word(address)
   end
 
   def read_ram_word(address)
-    (@ram[address - RAM_OFFSET + 1] << 8) + @ram[address - RAM_OFFSET]
+    @chip.read_ram_word(address)
+  end
+
+  def read_ram_memory(address, size)
+    @chip.read_ram_memory(address, size)
   end
 
   def write_rom_byte(address, value)
-    # @rom[address] = value
+    @chip.write_rom_byte(address, value)
   end
 
   def write_ram_byte(address, value)
-    @ram[address - RAM_OFFSET] = value
+    @chip.write_ram_byte(address, value)
   end
 end

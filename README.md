@@ -54,3 +54,15 @@ Initialize the Game Boy, choose a cartridge, load it, and play!
     $ cartridge = Cartridge.new('roms/tetris.gb')
     $ game_boy.load_cartridge(cartridge)
     $ game_boy.play(boot: false)
+
+## Resources
+
+- [Pan Docs](https://gbdev.io/pandocs/About.html)
+- [Game Boy development WIKI](https://gbdev.gg8.se/wiki/articles/Main_Page)
+- [codeslinger.co.uk](http://www.codeslinger.co.uk/pages/projects/gameboy/beginning.html)
+- [The Ultimate Game Boy Talk (33c3)](https://www.youtube.com/watch?v=HyzD8pNlpwI&ab_channel=media.ccc.de)
+
+## Similar and inspirational ruby projects
+
+- [Optcarrot, a NES emulator in ruby](https://github.com/mame/optcarrot)
+- [Waterfoul, a Game Boy emulator in ruby](https://github.com/colby-swandale/waterfoul)

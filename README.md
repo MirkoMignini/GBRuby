@@ -9,6 +9,12 @@ Despite all it aims to run more games as possible at a decent fps and pass all t
 Ruby is slow and not a good choice for an emulator.
 The challenge is to write something good enough to play games and check if it is possible to run it at 60 fps (spoiler: yes)
 
+## Features
+
+- Cycle accurate CPU
+- Scanline accurate PPU
+- Resizable window with full screen support
+
 ## Screenshots from various games
 
 | ![ Tetris ](screenshots/tetris.png) | ![ Tetris ](screenshots/tetris2.png)  |

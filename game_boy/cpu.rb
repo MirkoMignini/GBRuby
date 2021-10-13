@@ -16,6 +16,7 @@ class CPU
   CLOCKSPEED = 4_194_304.freeze
 
   attr_reader :device
+  attr_writer :if
 
   def initialize(device)
     @device = device
@@ -26,6 +27,7 @@ class CPU
     @unique = []
 
     @halted = false
+    @if = 0
   end
 
   def pc_read_byte

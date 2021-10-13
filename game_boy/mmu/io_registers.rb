@@ -27,13 +27,13 @@ class IORegisters < Memory
     super(0x80, 0xFF00, device)
   end
 
-  def set(address, value)
-    @memory[address] = value
-  end
+  # def set(address, value)
+  #   @memory[address] = value
+  # end
 
-  def get(address)
-    @memory[address]
-  end
+  # def get(address)
+  #   @memory[address]
+  # end
 
   def inc(address, value = 1)
     @memory[address] = @memory[address] + value & 0xFF
@@ -100,6 +100,7 @@ class IORegisters < Memory
 
   def if=(value)
     @memory[IF] = value
+    @device.cpu.if = value
   end
 
   def lcd_mode
@@ -138,6 +139,9 @@ class IORegisters < Memory
     elsif (relative_address == TAC)
       @device.timer.setup(value)
       @memory[relative_address] = value
+    elsif (relative_address == IF)
+      @memory[IF] = value
+      @device.cpu.if = value
     # TODO: check if is true
     # reset the current scanline if the game tries to write to it
     # elsif (address == 0xFF44)

@@ -205,14 +205,13 @@ class PPU
 
     # get tile base address
     tile_address = if @map_tiles_address == 0x8000
-      0x8000 + (@tile << 4)
+      0x8000 + @tile_y_offset + (@tile << 4)
     else
-      0x8800 + ((signed_byte(@tile) + 128) << 4)
+      0x8800 + @tile_y_offset + ((signed_byte(@tile) + 128) << 4)
     end
 
     # get tile bytes
-    byte_1 = @device.vram.read_byte(tile_address + @tile_y_offset)
-    byte_2 = @device.vram.read_byte(tile_address + @tile_y_offset + 1)
+    bytes = @device.vram.read_memory(tile_address, 2)
 
     # draw 8 pixel of this tile
     8.times do |index|
@@ -225,8 +224,8 @@ class PPU
 
       # get color
       shift = 1.lshift8(7 - index)
-      color = (byte_1 & shift).rshift8(7 - index) +
-              (byte_2 & shift).rshift8(6 - index)
+      color = (bytes[0] & shift).rshift8(7 - index) +
+              (bytes[1] & shift).rshift8(6 - index)
 
       # update framebuffer
       @framebuffer[@screen_y_offset + x] = @palette[color]
@@ -246,28 +245,33 @@ class PPU
 
     tile_y = (@window_line >> 3) & 0x1F
 
-    20.times do |tile_x|
+    21.times do |tile_x|
       next if (tile_x * 8 < @window_x)
 
       tile_x = (tile_x * 8 - @window_x) / 8
 
-      tile = @device.vram.read_byte(@win_tiles_map_address + tile_x + tile_y * 32)
+      tile = @device.vram.read_byte(@win_tiles_map_address + tile_x + (tile_y << 5))
+
+      scan_line_offset = (@window_line - @window_y) % 8 * 2
 
       address = if @map_tiles_address == 0x8000
-        0x8000 + (tile * 16)
+        0x8000 + scan_line_offset + (tile << 4)
       else
-        0x8800 + (signed_byte(tile) + 128) * 16
+        0x8800 + scan_line_offset + ((signed_byte(tile) + 128) << 4)
       end
-      scan_line_offset = (@window_line - @window_y) % 8 * 2
-      byte_1 = @device.vram.read_byte(address + scan_line_offset)
-      byte_2 = @device.vram.read_byte(address + scan_line_offset + 1)
+
+      bytes = @device.vram.read_memory(address, 2)
 
       8.times do |index|
         x = tile_x * 8 + @window_x + index
 
+        # skip if out of screen
+        next if x < 0
+        break if x >= 160
+
         shift = 1.lshift8(7 - index)
-        color = (byte_1 & shift).rshift8(7 - index) +
-                (byte_2 & shift).rshift8(6 - index)
+        color = (bytes[0] & shift).rshift8(7 - index) +
+                (bytes[1] & shift).rshift8(6 - index)
 
         @framebuffer[@scan_line * SCREEN_WIDTH + x] = COLORS[color]
       end
@@ -326,17 +330,15 @@ class PPU
       offset = sprite_height - offset - 1 if flip_y
       address = 0x8000 + (tile * 16) + (offset * 2)
 
-      byte_1 = @device.vram.read_byte(address)
-      byte_2 = @device.vram.read_byte(address + 1)
-
+      bytes = @device.vram.read_memory(address, 2)
       8.times do |x|
         next if sprite[:pos_x] + x < 0
         break if sprite[:pos_x] + x >= 160
 
         flip_offset = flip_x ? 7 - x : x
         shift = 1.lshift8(7 - flip_offset)
-        color = (byte_1 & shift).rshift8(7 - flip_offset) +
-                (byte_2 & shift).rshift8(6 - flip_offset)
+        color = (bytes[0] & shift).rshift8(7 - flip_offset) +
+                (bytes[1] & shift).rshift8(6 - flip_offset)
 
         position = @scan_line * SCREEN_WIDTH + sprite[:pos_x] + x
 
@@ -352,5 +354,9 @@ class PPU
     @device.input.step
     # FOR DEBUG ONLY
     # @framebuffer = Array.new(SCREEN_WIDTH * SCREEN_HEIGHT, 0xFFFF0000)
+  end
+
+  def dispose
+    @video.dispose
   end
 end

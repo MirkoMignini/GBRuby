@@ -39,6 +39,10 @@ class GameBoy
     exit
   end
 
+  def dispose
+    @ppu.dispose
+  end
+
   def skip_boot
     # set cpu register state
     @cpu.register_set('PC', 0x0100)

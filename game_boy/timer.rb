@@ -54,7 +54,7 @@ class Timer
     reset_tima
 
     if (@device.read_byte(TIMA) == 0xFF)
-      @device.io_registers.set(IORegisters::TIMA, @device.io_registers.get(IORegisters::TMA))
+      @device.io_registers.tima = @device.io_registers.tma
       @device.cpu.request_interrupt(CPU::INTERRUPT_TIMER)
     else
       @device.io_registers.inc(IORegisters::TIMA)

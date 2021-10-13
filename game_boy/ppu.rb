@@ -2,7 +2,7 @@ require_relative 'sdl2'
 require_relative 'video'
 
 class PPU
-  include SDL2\
+  include SDL2
 
   # Mode 00: When the flag is 00 it is the H-Blank
   # period and the CPU can access the display
@@ -87,14 +87,6 @@ class PPU
 
     # If LCD is disabled does nothing (LCDC bit 7 off)
     return if @lcdc & LCDC_DISPLAY_ENABLE == 0
-    #   # reset current scan line
-    #   @device.io_registers.set(IORegisters::LY, @scan_line = 0)
-    #   # set mode 0
-    #   @device.io_registers.set(IORegisters::STAT, @stat_register & 0b11111100)
-    #   # reset cycles
-    #   @cycles = 0
-    #   return
-    # end
 
     @scan_line = @device.io_registers.ly
     @mode = @device.io_registers.lcd_mode
@@ -146,9 +138,9 @@ class PPU
 
   def next_scan_line
     @scan_line = @scan_line == LAST_SCANLINE ? 0 : @scan_line + 1
-    @device.io_registers.set(IORegisters::LY, @scan_line)
+    @device.io_registers.ly = @scan_line
 
-    if @device.io_registers.get(IORegisters::LYC) == @scan_line
+    if @device.io_registers.lyc == @scan_line
       @device.io_registers.coincidence_flag = 1
       @device.cpu.request_interrupt(CPU::INTERRUPT_LCDSTAT) if @device.io_registers.coincidence_flag_enabled?
     else
@@ -163,20 +155,19 @@ class PPU
   end
 
   def setup_palette(palette)
-    value = @device.io_registers.get(palette)
     [
-      COLORS[value & 0b00000011],
-      COLORS[(value & 0b00001100) >> 2],
-      COLORS[(value & 0b00110000) >> 4],
-      COLORS[(value & 0b11000000) >> 6]
+      COLORS[palette & 0b00000011],
+      COLORS[(palette & 0b00001100) >> 2],
+      COLORS[(palette & 0b00110000) >> 4],
+      COLORS[(palette & 0b11000000) >> 6]
     ]
   end
 
   def draw_tiles
-    @palette = setup_palette(IORegisters::BGP)
+    @palette = setup_palette(@device.io_registers.bgp)
 
-    @scroll_x = @device.io_registers.get(IORegisters::SCX)
-    @scroll_y = @device.io_registers.get(IORegisters::SCY)
+    @scroll_x = @device.io_registers.scx
+    @scroll_y = @device.io_registers.scy
 
     @bg_tiles_map_address = (@lcdc & LCDC_BG_TILE_MAP_DISPLAY_SELECT == 0) ? 0x9800 : 0x9C00
     @map_tiles_address = (@lcdc & LCDC_BG_WINDOW_TILE_DATA_SELECT == 0) ? 0x8800 : 0x8000
@@ -188,6 +179,12 @@ class PPU
     # Screen coordinates
     @screen_x = (@tile_x * 8) - @scroll_x
     @screen_y = @scan_line
+
+    # Framebuffer y offset
+    @screen_y_offset = @screen_y * SCREEN_WIDTH
+
+    # Tile y offset
+    @tile_y_offset = (((@screen_y + @scroll_y) & 0xFF) % 8) * 2
 
     # There are max 21 visible horizontal tiles
     21.times do |index|
@@ -204,21 +201,18 @@ class PPU
 
   def draw_tile
     # get tile at current coordinates
-    @tile = @device.vram.read_byte(@bg_tiles_map_address + @tile_x + @tile_y * 32)
+    @tile = @device.vram.read_byte(@bg_tiles_map_address + @tile_x + (@tile_y << 5))
 
     # get tile base address
-    address = if @map_tiles_address == 0x8000
-      0x8000 + (@tile * 16)
+    tile_address = if @map_tiles_address == 0x8000
+      0x8000 + (@tile << 4)
     else
-      0x8800 + (signed_byte(@tile) + 128) * 16
+      0x8800 + ((signed_byte(@tile) + 128) << 4)
     end
 
-    # get current tile row
-    offset = (((@screen_y + @scroll_y) & 0xFF) % 8) * 2
-
     # get tile bytes
-    byte_1 = @device.vram.read_byte(address + offset)
-    byte_2 = @device.vram.read_byte(address + offset + 1)
+    byte_1 = @device.vram.read_byte(tile_address + @tile_y_offset)
+    byte_2 = @device.vram.read_byte(tile_address + @tile_y_offset + 1)
 
     # draw 8 pixel of this tile
     8.times do |index|
@@ -235,13 +229,13 @@ class PPU
               (byte_2 & shift).rshift8(6 - index)
 
       # update framebuffer
-      @framebuffer[@screen_y * SCREEN_WIDTH + x] = @palette[color]
+      @framebuffer[@screen_y_offset + x] = @palette[color]
     end
   end
 
   def draw_window
-    @window_y = @device.io_registers.get(IORegisters::WY)
-    @window_x = @device.io_registers.get(IORegisters::WX)
+    @window_y = @device.io_registers.wy
+    @window_x = @device.io_registers.wx
 
     return unless (@window_x <= 166 && @window_y <= 143 && @window_line <= 143 && @scan_line >= @window_y)
 
@@ -326,7 +320,7 @@ class PPU
       flip_y = attributes & SPRITE_ATTRIB_FLIPY == SPRITE_ATTRIB_FLIPY
       flip_x = attributes & SPRITE_ATTRIB_FLIPX == SPRITE_ATTRIB_FLIPX
       priority = attributes & SPRITE_ATTRIB_PRIORITY == SPRITE_ATTRIB_PRIORITY
-      palette = setup_palette(IORegisters::OBP0 + ((attributes & SPRITE_ATTRIB_PALETTE) >> 4) )
+      palette = setup_palette((attributes & SPRITE_ATTRIB_PALETTE) == SPRITE_ATTRIB_PALETTE ? @device.io_registers.obp1 : @device.io_registers.obp0)
 
       offset = @scan_line - sprite[:pos_y]
       offset = sprite_height - offset - 1 if flip_y
@@ -346,7 +340,7 @@ class PPU
 
         position = @scan_line * SCREEN_WIDTH + sprite[:pos_x] + x
 
-        next if color == 0 || (priority && @framebuffer[position] != @palette[0])
+        next if color == 0 || (priority && @framebuffer[position] != palette[0])
 
         @framebuffer[position] = palette[color]
       end

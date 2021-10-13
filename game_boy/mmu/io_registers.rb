@@ -48,12 +48,58 @@ class IORegisters < Memory
     end
   end
 
-  def lcdc
-    @memory[LCDC]
+  def lcdc()= @memory[LCDC]
+  def ly()= @memory[LY]
+  def lyc()= @memory[LYC]
+  def scx()= @memory[SCX]
+  def scy()= @memory[SCY]
+  def wx()= @memory[WX]
+  def wy()= @memory[WY]
+  def tma()= @memory[TMA]
+  def tima()= @memory[TIMA]
+  def bgp()= @memory[BGP]
+  def obp0()= @memory[OBP0]
+  def obp1()= @memory[OBP1]
+  def if()= @memory[IF]
+
+  def lcdc=(value)
+    @memory[LCDC] = value
   end
 
-  def ly
-    @memory[LY]
+  def ly=(value)
+    @memory[LY] = value
+  end
+
+  def lyc=(value)
+    @memory[LYC] = value
+  end
+
+  def scx=(value)
+    @memory[SCX] = value
+  end
+
+  def scy=(value)
+    @memory[SCY] = value
+  end
+
+  def wx=(value)
+    @memory[WX] = value
+  end
+
+  def wy=(value)
+    @memory[WY] = value
+  end
+
+  def tma=(value)
+    @memory[TMA] = value
+  end
+
+  def tima=(value)
+    @memory[TIMA] = value
+  end
+
+  def if=(value)
+    @memory[IF] = value
   end
 
   def lcd_mode
@@ -81,26 +127,28 @@ class IORegisters < Memory
   end
 
   def write_byte(address, value)
-    if (address - @offset == SC && value == 0x81)
+    relative_address = address - @offset
+
+    if (relative_address == SC && value == 0x81)
       print @memory[1].chr
-      @memory[address - @offset] = value
+      @memory[relative_address] = value
     # writing any value to DIV sets it to $00
-    elsif (address - @offset == DIV)
-      @memory[address - @offset] = 0
-    elsif (address - @offset == TAC)
+    elsif (relative_address == DIV)
+      @memory[relative_address] = 0
+    elsif (relative_address == TAC)
       @device.timer.setup(value)
-      @memory[address - @offset] = value
+      @memory[relative_address] = value
     # TODO: check if is true
     # reset the current scanline if the game tries to write to it
     # elsif (address == 0xFF44)
-    #   @memory[address - @offset] = 0
-    elsif (address - @offset == STAT)
+    #   @memory[relative_address] = 0
+    elsif (relative_address == STAT)
       # bits 0-2 are read-only
-      @memory[address - @offset] = (value & 0xf8) | (memory[address - @offset] & 0x07);
-    elsif (address - @offset == DMA)
+      @memory[relative_address] = (value & 0xf8) | (memory[relative_address] & 0x07);
+    elsif (relative_address == DMA)
       @device.oam.dma(value)
     else
-      @memory[address - @offset] = value
+      @memory[relative_address] = value
     end
   end
 end

@@ -27,15 +27,15 @@ module Interrupts
   end
 
   def request_interrupt(interrupt)
-    device.io_registers.set(IORegisters::IF, device.io_registers.get(IORegisters::IF) | interrupt)
+    device.io_registers.if = device.io_registers.if | interrupt
   end
 
   def reset_interrupt(interrupt)
-    device.io_registers.set(IORegisters::IF, device.io_registers.get(IORegisters::IF) & (0xFF & ~interrupt))
+    device.io_registers.if = device.io_registers.if & (0xFF & ~interrupt)
   end
 
   def process_interrupts
-    requested_interrupts = device.io_registers.get(IORegisters::IF)
+    requested_interrupts = device.io_registers.if
 
     return if requested_interrupts == 0x0
 

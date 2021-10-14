@@ -4,7 +4,18 @@ require 'stackprof'
 
 game_boy = GameBoy.new
 # cartridge = Cartridge.new('roms/DMG_ROM.gb')
+# cartridge = Cartridge.new('roms/boot_div-dmg0.gb')
+# cartridge = Cartridge.new('roms/daa.gb')
+# cartridge = Cartridge.new('roms/merken.gb')
+cartridge = Cartridge.new('roms/Super Mario Land.gb')
+# cartridge = Cartridge.new('roms/Super Mario Land 2.gb')
+# cartridge = Cartridge.new('roms/sprite_priority.gb')
+# cartridge = Cartridge.new("roms/The Legend of Zelda - Link's Awakening.gb")
 # cartridge = Cartridge.new('roms/tetris.gb')
+# cartridge = Cartridge.new('roms/Super R.C. Pro-Am (USA, Europe).gb')
+# cartridge = Cartridge.new('roms/tennis.gb')
+# cartridge = Cartridge.new('roms/Marble Madness.gb')
+# cartridge = Cartridge.new("roms/Kirby's Dream Land.gb")
 # cartridge = Cartridge.new('roms/Hyper Lode Runner.gb')
 # cartridge = Cartridge.new('roms/Dr. Mario.gb')
 # cartridge = Cartridge.new('roms/Bubble Ghost.gb')
@@ -23,12 +34,18 @@ game_boy = GameBoy.new
 # cartridge = Cartridge.new('roms/11-op a,(hl).gb')
 # cartridge = Cartridge.new('roms/interrupt_time.gb')
 # cartridge = Cartridge.new('roms/instr_timing.gb')
+# cartridge = Cartridge.new('roms/cputest.gb')
+# cartridge = Cartridge.new('roms/Pokemon Red.gb')
+# cartridge = Cartridge.new('roms/Pokemon Blue.gb')
 game_boy.load_cartridge(cartridge)
 
-# StackProf.start(mode: :cpu)
-# begin
+StackProf.start(mode: :cpu)
+begin
   game_boy.play(boot: false)
-# ensure
-#   StackProf.stop
-#   StackProf.results('stackprof.dump')
-# end
+ensure
+  StackProf.stop
+  StackProf.results('stackprof.dump')
+  game_boy.dispose
+
+  puts "Average FPS: #{game_boy.ppu.video.avg_fps} after #{game_boy.ppu.video.frames_counter} frames."
+end

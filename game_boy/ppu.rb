@@ -70,7 +70,7 @@ class PPU
   SPRITE_ATTRIB_FLIPX     = 0b00100000.freeze
   SPRITE_ATTRIB_PALETTE   = 0b00010000.freeze
 
-  attr_reader :window
+  attr_reader :window, :video
 
   def initialize(device)
     @device = device
@@ -211,7 +211,7 @@ class PPU
     end
 
     # get tile bytes
-    bytes = @device.vram.read_memory(tile_address, 2)
+    byte0, byte1 = @device.vram.read_memory(tile_address, 2)
 
     # draw 8 pixel of this tile
     8.times do |index|
@@ -223,11 +223,12 @@ class PPU
       break if x >= 160
 
       # get color
-      shift = 1.lshift8(7 - index)
-      color = (bytes[0] & shift).rshift8(7 - index) +
-              (bytes[1] & shift).rshift8(6 - index)
+      offset = 7 - index
+      shift = 1 << offset
+      color = ((byte0 & shift) >> offset) +
+              ((byte1 & shift) >> (offset - 1))
 
-      # update framebuffer
+      # # update framebuffer
       @framebuffer[@screen_y_offset + x] = @palette[color]
     end
   end
@@ -330,17 +331,20 @@ class PPU
       offset = sprite_height - offset - 1 if flip_y
       address = 0x8000 + (tile * 16) + (offset * 2)
 
-      bytes = @device.vram.read_memory(address, 2)
+      byte0, byte1 = @device.vram.read_memory(address, 2)
+      frame_buffer_address = @scan_line * SCREEN_WIDTH + sprite[:pos_x]
+
       8.times do |x|
-        next if sprite[:pos_x] + x < 0
-        break if sprite[:pos_x] + x >= 160
+        screen_pos_x = sprite[:pos_x] + x
+        next if screen_pos_x < 0
+        break if screen_pos_x >= 160
 
         flip_offset = flip_x ? 7 - x : x
-        shift = 1.lshift8(7 - flip_offset)
-        color = (bytes[0] & shift).rshift8(7 - flip_offset) +
-                (bytes[1] & shift).rshift8(6 - flip_offset)
+        shift = 1 << (7 - flip_offset)
+        color = ((byte0 & shift) >> (7 - flip_offset)) +
+                ((byte1 & shift) >> (6 - flip_offset))
 
-        position = @scan_line * SCREEN_WIDTH + sprite[:pos_x] + x
+        position = frame_buffer_address + x
 
         next if color == 0 || (priority && @framebuffer[position] != palette[0])
 
